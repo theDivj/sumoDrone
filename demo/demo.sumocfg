@@ -7,14 +7,14 @@
         <additional-files value="demo.add.xml"/>
       </configuration>
 	<output>
-        <battery-output value="" type="FILE" help="Save the battery values of each vehicle"/>
+        <battery-output value="b" type="FILE" help="Save the battery values of each vehicle"/>
         <chargingstations-output value="" type="FILE" help="Write data of charging stations"/>
         <tripinfo-output value="" synonymes="tripinfo" type="FILE" help="Save single vehicle trip info into FILE"/>
         <fcd-output value="" type="" help="Save the Floating Car Data"/>
         <statistic-output value="stats.txt" synonymes="statistics-output" type="FILE" help="Write overall statistics into FILE"/>
         <summary-output value="" synonymes="summary" type="FILE" help="Save aggregated vehicle departure info into FILE"/>
         <summary-output.period value="-1" type="TIME" help="Save summary-output with the given period"/>
-    </output>
+   </output>
 	<time>
         <begin value="0" synonymes="b" type="TIME" help="Defines the begin time in seconds; The simulation starts at this time"/>
         <end value="-1" synonymes="e" type="TIME" help="Defines the end time in seconds; The simulation ends at this time"/>
@@ -25,18 +25,20 @@
         <xml-validation value="local"/>
         <aggregate-warnings value="" type="INT" help="Aggregate warnings of the same type whenever more than INT occur"/>
         <no-warnings value="false" synonymes="W suppress-warnings" type="BOOL" help="Disables output of warnings"/>
-        <duration-log.statistics value="true" synonymes="t" type="BOOL" help="Enable statistics on vehicle trips"/>
+        <duration-log.statistics value="" synonymes="t" type="BOOL" help="Enable statistics on vehicle trips"/>
         <log value="" synonymes="l log-file" type="FILE" help="Writes all messages to FILE (implies verbose)"/>
         <error-log value="" type="FILE" help="Writes all warnings and errors to FILE"/>
         <no-step-log value="true" type="BOOL" help="Disable console output of current simulation step"/>
     </report>
+ 
     <processing>
        <time-to-teleport value="-1" type="TIME" help="Specify how long a vehicle may wait until being teleported, defaults to 300, non-positive values disable teleporting"/>
-       <ignore-route-errors value="false" type="BOOL" help="Do not check whether routes are connected"/>
-    </processing>  
+       <time-to-impatience value="15" type="TIME" help="Specify how long a vehicle may wait until impatience grows from 0 to 1, defaults to 300, non-positive values disable impatience growth"/>
+     </processing>  
     <routing>
-        <!-- <weights.priority-factor value="2" type="FLOAT" help="Consider edge priorities in addition to travel times, weighted by factor"/> -->
-    </routing>
+      <!-- <weights.random-factor value="10.0" type="FLOAT" help="Edge weights for routing are dynamically disturbed by a random factor drawn uniformly from [1,FLOAT)"/>         -->
+      <!-- <weights.priority-factor value="2" type="FLOAT" help="Consider edge priorities in addition to travel times, weighted by factor"/> -->
+   </routing>
    <gui_only>
         <gui-settings-file value="demo.view.xml" synonymes="g" type="FILE" help="Load visualisation settings from FILE"/>
     </gui_only>

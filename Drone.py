@@ -61,7 +61,7 @@ class Drone:
         self.myBrokenChaseCount = 0        # count of broken chases where we didn't get to ev before it left sim
         self.myChaseSteps = 0              # count of steps in all complete chases - used with myChaseCount to compute average
         # finally create the POI representing our drone
-        traci.poi.add(self.myID, pos[0], pos[1], color=(255,255,255), layer=250, imgFile=".\\PNG132.bmp", width=10, height=10)
+        traci.poi.add(self.myID, pos[0], pos[1], color=(0,0,255,255), layer=250, imgFile=".\\drone.png", width=10, height=10)
 
     def __lt__(self,other):
         return int(self.myID[1:]) < int(other.myID[1:])
@@ -216,7 +216,7 @@ class Drone:
             if not self.myViableCharge:
                 self.myViableCharge = True
                 GG.cc.notifyDroneState(self)  # cc only interested when we become viable
-                traci.poi.setColor(self.myID,(255,255,255,255))
+                traci.poi.setColor(self.myID,(0,0,255,255))
         else:
             self.myViableCharge = False
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+  <!-- six EV's and two non-EV (ICE) for demo - in this file rather than additional so that scale factor can be used  -->
+ 
+    <trip id="ev1" type="soulEV65" depart="10" color="white" from="E0" to="E8" />
+    <trip id="ev2" type="soulEV65" depart="15" color="white" from="-E8" to="-E0" />
+    <trip id="ICE" depart="25" color="red" from="E0" to="E8" />
+    <trip id="ICEa" depart="25" color="red" from="-E8" to="-E0" />
+    <trip id="ev3" type="soulEV65" depart="60" color="blue" from="E0" to="E8" />
+    <trip id="ev4" type="soulEV65" depart="80" color="blue" from="-E8" to="-E0" />
+    <trip id="ev5" type="soulEV65" depart="90" color="orange" from="E0" to="E8" />
+    <trip id="ev6" type="soulEV65" depart="100" color="orange" from="-E8" to="-E0" />
+
+
+</routes>

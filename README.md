@@ -1,6 +1,6 @@
 Simple example using SUMO and Python Traci scripts to model the use of Drones to charge Electric vehicles (EVs).
 
-  Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model,
+  Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model.
   they then get charged by the nearest drone, that is not busy, after which the drone will return to the nearest charge hub - or another vehicle if required
   
 Charging stations(need to be created on the road network and are 'discovered' in the code. These are used to launch and 'charge' drones

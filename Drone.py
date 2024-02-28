@@ -83,8 +83,6 @@ class Drone:
             self.myState = Drone.DroneState.FLYINGTORENDEZVOUS
         else:
             self.myState = Drone.DroneState.FLYINGTOEV
-
-        #self.update(ev.getMyPosition())  # for backwards compatibility - logically not good
         return True
 
     def chargeMe(self):
@@ -179,7 +177,6 @@ class Drone:
 
     def notifyEVFinished(self,evState):
         """EV tells us that it is charged or has left simulation so free self up"""
-        #print("notifyEVCharged",self.myID,self.myEV.getID(),self.myState,evState)
         self.setMyParkPosition()
         self.myState = Drone.DroneState.FLYINGTOPARK
         traci.poi.setParameter(self.myID,"status","Flying to park")

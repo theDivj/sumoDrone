@@ -11,8 +11,8 @@ from Drone import Drone
 class ControlCentre:
     """Main class receiving requests from EV's and notifications from Drones and EV's when charge completes or Drone is out of battery"""
     def __init__(self,wEnergy,wUrgency,proximityRadius,maxDrones,dronePrint,droneLog,chargePrint,chargeLog):
-        self.wEnergy = wEnergy
-        self.wUrgency = wUrgency
+        self.wEnergy = float(wEnergy)
+        self.wUrgency = float(wUrgency)
         self.proximityRadius = proximityRadius
         self.maxDrones = maxDrones
         self.dronePrint = dronePrint
@@ -423,12 +423,12 @@ class ControlCentre:
                 print( "\tdrone:{}\tKm:{:.2f}\tCharge KW:{:.2f}\tFlyingKW:{:.2f}\tResidual ( chargeWh:{:.0f} flyingWh:{:.0f} )"\
                 .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge))
 
-    def requestCharge(self,ev,capacity):
+    def requestCharge(self,ev,capacity,requestedWh=2000.):
         """request for charge from EV
             - could add amount of charge required to enhance drone selection but that would not allow for time for drone to arrive"""
         self.requests.add(ev)
         if self.chargePrint:
-            print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep,ev.getID(),EV.EVState.CHARGEREQUESTED,"",capacity,0.0),file=self.chargeLog)
+            print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep,ev.getID(),EV.EVState.CHARGEREQUESTED,"",capacity,0.0,requestedWh/1000.),file=self.chargeLog)
 
     def update(self):
         """Management of 'control centre' executed by simulation on every step"""

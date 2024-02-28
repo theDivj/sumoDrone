@@ -23,6 +23,7 @@ class EV:
     #    realistic levels might be computed from the distance the vehicle is expected to travel, the remaining charge and some contingency of remaining charge?
     chargeNeededThreshold = 30000.   # 30KW
     chargeDoneThreshold = 32000.     # 32KW
+    evChargeRequestWh = 2000.         # size of the charge request
 
     # average distance vehicle will travel per Wh
     kmPerWh = 6.5/1000.   #  very general average used to compute vehicle range
@@ -43,6 +44,15 @@ class EV:
         self.myChargeSteps = 0
         self.myChaseSteps = 0
         self.myCapacity = EV.chargeDoneThreshold
+        # We want to support ev requesting enough charge to get to destination
+        #  or to a charge point - meaning that a charge request will have a varying amount
+        #  allowing allocation of a drone with sufficient capacity to satisfy the request
+        # This means we stop charging at a request specific charge done threshold
+        #  also means we need to remember the size of the request so we can set my
+        #  charge done threshold *when we start charging* by adding the request to the
+        #  current capacity when the drone arrives  - (setLastChargeRequest to be implemented for this)
+        self.myChargeDone = EV.chargeDoneThreshold
+        self.myLastChargeRequest = EV.evChargeRequestWh  # default
         EV.evCount += 1
 
     def __del__(self):
@@ -78,10 +88,15 @@ class EV:
         """State change"""
         self.myState = EV.EVState.LEFTSIMULATION
 
+    def setLastChargeRequest(self):
+        """Work out how much charge (in Wh) is needed"""
+        # not yet implemented
+        self.myLastChargeRequest = EV.evChargeRequestWh
+
     def setMyPosition(self):
         """get real EV position from simulation and set my variable"""
-        if self.myState == EV.EVState.WAITINGFORRENDEZVOUS:
-            self.myDrone.notifyChase(False,self.myChaseSteps)   # failed chase
+        if self.myState == EV.EVState.WAITINGFORRENDEZVOUS:     # never called from this state so
+            self.myDrone.notifyChase(False,self.myChaseSteps)   # must be failed chase
         self.myPosition = traci.vehicle.getPosition(self.myID)
 
     def stopCharging(self,clearDrone):
@@ -101,11 +116,13 @@ class EV:
 
                 if (self.myChargeCount < 1 ) or  ( not GG.ss.onlyChargeOnce ) :
                     self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
-                    if self.myCapacity < EV.chargeNeededThreshold:
+                    if self.myCapacity < EV.chargeNeededThreshold:   # needs to change when setLastChargeRequest implemented?
                         self.setMyPosition()
                         traci.vehicle.setColor(self.myID,(255,0,0,255))   # red
                         self.myState = EV.EVState.CHARGEREQUESTED
-                        GG.cc.requestCharge(self,self.myCapacity)
+                        self.setLastChargeRequest()
+                        self.myChargeDone = self.myCapacity + self.myLastChargeRequest
+                        GG.cc.requestCharge(self,self.myCapacity,self.myLastChargeRequest)
 
             case EV.EVState.CHARGEREQUESTED:
                 if self.myDrone:
@@ -133,6 +150,8 @@ class EV:
                         self.myState = EV.EVState.CHARGINGFROMDRONE
                         self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
                         GG.cc.notifyEVState(self,self.myState,self.myDrone.getID(),self.myCapacity)
+                        # commented out until setLastChargeRequest is implemented to let charge output be less boring
+                        #self.myChargeDoneThreshold = self.myCapacity + self.lastChargeRequest
                     else:   # failed chase because drone broke off and changed my state via EV.stopCharging
                         self.myDrone.notifyChase(False,self.myChaseSteps)
                         traci.vehicle.setColor(self.myID,self.myColour)
@@ -147,7 +166,7 @@ class EV:
                     self.myCapacity += chWh
                     traci.vehicle.setParameter(self.myID, "device.battery.actualBatteryCapacity", self.myCapacity )
                     self.myChargeSteps += 1
-                    if self.myCapacity >= EV.chargeDoneThreshold:     # we've finished charging
+                    if self.myCapacity >= self.myChargeDone:     # we've finished charging
                         traci.vehicle.setColor(self.myID,self.myColour)
                         self.myState = EV.EVState.DRIVING
                         GG.cc.notifyEVState(self,self.myState,self.myDrone.getID(),self.myCapacity)

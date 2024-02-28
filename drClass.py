@@ -35,9 +35,9 @@ class drClass:
     maxEvs  = sys.maxsize       # maximum no of EVs that can be shadowed
 
     # Environment classes
-    ss = None       # Simulation class
-    ch = None       # ChargeHubs class
-    cc = None       # Control Centre class
+    #ss = None       # Simulation class
+    #ch = None       # ChargeHubs class
+    #cc = None       # Control Centre class
     sumoCmd = None  #  The sumo runstring
 
     def __ini__(self):
@@ -51,24 +51,23 @@ class drClass:
     def __del__(self):
         """Print statistics and close any files"""
         # output statistics
-        if drClass.cc is not None:
-            drClass.cc.printDroneStatistics(drClass.briefStatistics,drClass.sumoCmd,__file__,__version__)
+        if GG.cc is not None:
+            GG.cc.printDroneStatistics(drClass.briefStatistics,drClass.sumoCmd,__file__,__version__)
 
         # tidy up
         if drClass.dronePrint:
             drClass.droneLog.close()
         if self.chargePrint:
             drClass.chargeLog.close()
-        del drClass.cc, drClass.ch, drClass.ss
+        #del drClass.cc, drClass.ch, drClass.ss
 
     def loop(self):
         """main simulation loop"""
-        while drClass.ss.step():
+        while GG.ss.step():
             pass
 
     def parseRunstring(self,parser=None,argparse=None):
         """use argparse to parse runstring and set our variables"""
-        #parser = argparse.ArgumentParser(description="sample traci code - using a POI to represent a drone charging EVs")
         parser.add_argument('-v', '--version', action='version', version='%(prog)s' + __version__)
 
         # set up the expected runstring
@@ -89,13 +88,13 @@ class drClass:
         # and parse what we actually got
         args = parser.parse_args()
         if args.lineOfSight:                   # has the default value of True
-            drClass.modelRendezvous = True
+            modelRendezvous = True
         else:                                  # unless the flag is in the runstring when it's 'None'
-            drClass.modelRendezvous = False
+            modelRendezvous = False
         if args.multipleCharge:                # has the default value of True
-            drClass.onlyChargeOnce = True
+            onlyChargeOnce = True
         else:                                  # unless the flag is in the runstring when it's 'None'
-            drClass.onlyChargeOnce = False
+            onlyChargeOnce = False
         if args.outputFile:
             drClass.dronePrint = True
             drClass.droneLog = args.outputFile
@@ -115,37 +114,40 @@ class drClass:
             drClass.briefStatistics = True
 
         # maximum no of EVs that can be charged by Drones
-        drClass.maxEVs = args.maxEVs
+        maxEVs = args.maxEVs
 
         # create sumo runstring
         sumoBinary = os.environ['SUMO_HOME'] + '/bin/'+ args.sumoBinary
         drClass.sumoCmd = [sumoBinary, "-c", args.sumocfg]
 
         # create our management objects plus ChargeHubs - which is essentially static
-        drClass.ss = Simulation(drClass.sumoCmd,drClass.modelRendezvous,drClass.onlyChargeOnce,drClass.maxEVs,drClass.dronePrint,drClass.droneLog)
-        drClass.ch = ChargeHubs()
-        drClass.cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius,args.maxDrones,\
+        ss = Simulation(drClass.sumoCmd,modelRendezvous,onlyChargeOnce,maxEVs,drClass.dronePrint,drClass.droneLog)
+        ch = ChargeHubs()
+        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius,args.maxDrones,\
                                                 drClass.dronePrint,drClass.droneLog,drClass.chargePrint,drClass.chargeLog)
 
         # setup the global references to these objects
-        g = GG(drClass.cc,drClass.ss,drClass.ch)
+        gg = GG(cc,ss,ch)
 
         # any output file would have been opened in parse_args() - write out the title line if needed
-        if self.dronePrint:
-            print("Time Step\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=self.droneLog)
-        if self.chargePrint:
-            print("timeStep\tEV id\tEV State\tDrone\tCapacity\tCharge (if any)",file=self.chargeLog)
+        if drClass.dronePrint:
+            print("Time Step\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=drClass.droneLog)
+        if drClass.chargePrint:
+            print("timeStep\tEV id\tEV State\tDrone\tCapacity\tCharge (if any)\tRequested Charge",file=drClass.chargeLog)
+
+        return gg
 
 def main():
     """Instantiate!"""
     import argparse    # here because pdoc gets upset if its in the stamdard position at the top of the file
-    # import tracemalloc
-    #If we are using tracemalloc to check for memory leaks:
+    #import tracemalloc
     #tracemalloc.start()
 
     parser = argparse.ArgumentParser(description="sample traci code - using a POI to represent a drone charging EVs")
     session = drClass()
-    session.parseRunstring(parser, argparse)
+    gg = session.parseRunstring(parser, argparse)
+    del parser
+
     session.loop()
 
     #snapshot = tracemalloc.take_snapshot()
@@ -153,7 +155,7 @@ def main():
     #for stat in top_stats[:10]:
     #   print(stat)
 
-    del session
+    del session, gg
 
 # wrapper to allow import without execution for pydoc/pdoc etc
 if __name__ == '__main__':

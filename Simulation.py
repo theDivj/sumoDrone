@@ -43,7 +43,7 @@ class Simulation:
             for vehID in loadedVehicles:
                 if traci.vehicle.getParameter(vehID, "has.battery.device") == "true":       # we are only interested in EVs
                     if len(Simulation.EVs) < Simulation.maxEVs:
-                        Simulation.EVs[vehID] = EV(vehID)
+                        Simulation.EVs[vehID] = EV(vehID,EV.kmPerWh)   # can set kmPerWh here to cater for different EVs - get from an EV parameter?
 
             if traci.simulation.getArrivedNumber() > 0:             # handle vehicles that have left the simulation
                 arrivedVehicles = traci.simulation.getArrivedIDList()

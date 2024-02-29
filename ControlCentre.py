@@ -116,7 +116,7 @@ class ControlCentre:
 
                 hub,hubDistance = GG.ch.findNearestHub(evPos[0],evPos[1])
                 #hub,hubDistance = GG.ch.findNearestHubDriving(evID)
-                evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity"))  * EV.kmPerWh
+                evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity"))  * ev.getMyKmPerWh()
 
                 proximity = 1.0
                 urgency = 1.0
@@ -424,8 +424,7 @@ class ControlCentre:
                 .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge))
 
     def requestCharge(self,ev,capacity,requestedWh=2000.):
-        """request for charge from EV
-            - could add amount of charge required to enhance drone selection but that would not allow for time for drone to arrive"""
+        """request for charge from EV"""
         self.requests.add(ev)
         if self.chargePrint:
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep,ev.getID(),EV.EVState.CHARGEREQUESTED,"",capacity,0.0,requestedWh/1000.),file=self.chargeLog)

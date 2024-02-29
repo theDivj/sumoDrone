@@ -23,17 +23,22 @@ class EV:
     #    realistic levels might be computed from the distance the vehicle is expected to travel, the remaining charge and some contingency of remaining charge?
     chargeNeededThreshold = 30000.   # 30KW
     chargeDoneThreshold = 32000.     # 32KW
-    evChargeRequestWh = 2000.         # size of the charge request
+    evChargeRequestWh = 2000.        # size of charge request - awaiting config of realistic levels
 
     # average distance vehicle will travel per Wh
-    kmPerWh = 6.5/1000.   #  very general average used to compute vehicle range
-
+    kmPerWh = 6.5/1000.   #  default average used to compute vehicle range 
+    
     evCount = 0         # count of EVs
     evChargeSteps = 0   # total steps when EVs were charging
     evChargeGap = 0.0   # total charge gap
     evChargeCount = 0   # total no of full charges
 
-    def __init__(self,evID):
+    def __init__(self,evID,kmPerWh=0.0):
+        if kmPerWh <= 0.0:
+            self.myKmPerWh = EV.kmPerWh
+        else:
+            self.myKmPerWh = kmPerWh
+        
         self.myID = evID
         self.myState = EV.EVState.DRIVING
         self.myPosition = (0.,0.)
@@ -43,7 +48,8 @@ class EV:
         self.myChargeCount = 0
         self.myChargeSteps = 0
         self.myChaseSteps = 0
-        self.myCapacity = EV.chargeDoneThreshold
+        self.myCapacity = EV.chargeDoneThreshold    #  we only shadow this when charging (state EV.EVState.CHARGINGFROMDRONE)
+
         # We want to support ev requesting enough charge to get to destination
         #  or to a charge point - meaning that a charge request will have a varying amount
         #  allowing allocation of a drone with sufficient capacity to satisfy the request
@@ -79,6 +85,10 @@ class EV:
     def getID(self):
         """getter function for EV identity"""
         return self.myID
+    
+    def getMyKmPerWh(self):
+        """getter for my average usage"""
+        return self.myKmPerWh
 
     def getMyPosition(self):
         """getter function for x,y position"""

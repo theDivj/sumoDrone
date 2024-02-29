@@ -25,8 +25,6 @@ __version__ = ' 3.0 25th February 2024'
 #
 class drClass:
     """Wrapper class to setup and execute simulation"""
-    modelRendezvous = True      # whether we comnpute a rendezvous point
-    onlyChargeOnce = True       # whether each EV will only be charged once
     dronePrint = False          # whether to output a file detailing drone charge/charging
     droneLog = None             #  filepath for dronePrint
     chargePrint = False         # whether to output a file detailing charge request/charging for each EV
@@ -34,10 +32,6 @@ class drClass:
     briefStatistics = False     # whether to output single line summary statistics
     maxEvs  = sys.maxsize       # maximum no of EVs that can be shadowed
 
-    # Environment classes
-    #ss = None       # Simulation class
-    #ch = None       # ChargeHubs class
-    #cc = None       # Control Centre class
     sumoCmd = None  #  The sumo runstring
 
     def __ini__(self):
@@ -59,7 +53,6 @@ class drClass:
             drClass.droneLog.close()
         if self.chargePrint:
             drClass.chargeLog.close()
-        #del drClass.cc, drClass.ch, drClass.ss
 
     def loop(self):
         """main simulation loop"""

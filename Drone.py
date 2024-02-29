@@ -66,6 +66,9 @@ class Drone:
     def __lt__(self,other):
         return int(self.myID[1:]) < int(other.myID[1:])
 
+    def __str__(self):
+        return self.myID
+
     @classmethod
     def stepSecsAdjust(cls,stepSecs):
         """ adjust timestep class variables for the actual timestep = no change when timeStep = 1sec"""

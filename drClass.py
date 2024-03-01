@@ -19,7 +19,7 @@ from Simulation import Simulation
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = ' 3.0 25th February 2024'
+__version__ = ' 3.1 29th February 2024'
 #
 #  v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -77,6 +77,8 @@ class drClass:
         parser.add_argument('-we','--wEnergy', help='weighting to apply to vehicles found in radius, default 1',metavar='n.n', type=float, default=1.0)
         parser.add_argument('-o','--outputFile', help='file for output of detailed drone charge levels for each step, default no output',metavar='filePath', type=argparse.FileType('x'))
         parser.add_argument('-c','--chargeFile', help='file for output of detailed EV charge levels beginning/end of charge, default no output',metavar='filePath', type=argparse.FileType('x'))
+        parser.add_argument('-r','--randomSeed', help='seed for random generator triggering requests and sizeof requests',metavar='n',type=int, default=0)
+        parser.add_argument('-k','--droneKmPerHr', help='drone speed Km/h',metavar='n',type=float, default=60.0)
 
         # and parse what we actually got
         args = parser.parse_args()
@@ -108,6 +110,9 @@ class drClass:
 
         # maximum no of EVs that can be charged by Drones
         maxEVs = args.maxEVs
+        #
+        randomSeed = args.randomSeed
+        droneKmPerHr = args.droneKmPerHr
 
         # create sumo runstring
         sumoBinary = os.environ['SUMO_HOME'] + '/bin/'+ args.sumoBinary
@@ -120,7 +125,7 @@ class drClass:
                                                 drClass.dronePrint,drClass.droneLog,drClass.chargePrint,drClass.chargeLog)
 
         # setup the global references to these objects
-        gg = GG(cc,ss,ch)
+        gg = GG(cc,ss,ch,randomSeed,droneKmPerHr)
 
         # any output file would have been opened in parse_args() - write out the title line if needed
         if drClass.dronePrint:

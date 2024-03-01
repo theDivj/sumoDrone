@@ -289,7 +289,7 @@ class ControlCentre:
             case EV.EVState.DRIVING:            # means charge complete  so calculate charge
                 if ev.getID() in self.startChargeEV:
                     charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()] ) * Drone.WhEVChargeRatePerTimeStep
-                    self.startChargeEV[ev.getID()] = 0
+                    del self.startChargeEV[ev.getID()]
 
             case EV.EVState.CHARGEREQUESTED:    # only log request
                 pass

@@ -22,8 +22,11 @@ class Drone:
     parkAtHome = False      # option to force parking/charging back to the charge hub where drone started
 
     # class variables
-    droneKMperh = 60.0      # drone cruising speed
+    droneKMperh = 60.0                                              # drone cruising speed
     droneMperSec = droneKMperh/3.6
+    droneStepMperTimeStep = droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
+    droneStepM2 = droneStepMperTimeStep * droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
+
     droneChargeWh = 30000.            # capacity of battery used to charge ev's  - guess based on Ehang 184 load capacity
     droneFlyingWh = 14400.            # capacity of battery used to power drone
     droneFlyingWhperTimeStep = droneFlyingWh / ( 23 * 60. )   # power usage based on Ehang 184 which has battery capacity of 14.4 KW giving 23 mins flight time
@@ -48,6 +51,12 @@ class Drone:
         self.myViableCharge = True
         self.myState = Drone.DroneState.PARKED
         self.myEV = None
+        # reset drone speed factors with any runstring override
+        Drone.droneKMperh = GG.getDroneSpeed()
+        Drone.droneMperSec = Drone.droneKMperh/3.6
+        Drone.droneStepMperTimeStep = Drone.droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
+        Drone.droneStepM2 = Drone.droneStepMperTimeStep * Drone.droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
+
         # logging variables
         self.myFlyingCount = 0            # used to compute distance travelled
         self.myFullCharges = 0             #  count of complete charges

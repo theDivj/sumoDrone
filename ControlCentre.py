@@ -42,7 +42,7 @@ class ControlCentre:
         #print("allocation",GG.ss.timeStep,drone.getID(),ev.getID())
 
     def allocateDrones(self,urgencyList):
-        """Allocate whatever drones we have free/viable in order of urgency
+        """Allocate whatever drones we have free/viable in order of urgency,
             if more than one drone available assign the nearest"""
         lu = len(urgencyList)
         ld = len(self.freeDrones)
@@ -97,8 +97,8 @@ class ControlCentre:
                     break
 
     def calcUrgency(self):
-        """urgency defined as distance to nearest hub/distance ev can travel on charge
-            create a list of ev's that want charge, have not been allocated a drone and sort list by urgency
+        """urgency defined as distance to nearest hub/distance ev can travel on charge.
+            creates a list of ev's that want charge, have not been allocated a drone
         """
         urgencyList = {}
         if len(self.requests) == 1:
@@ -150,8 +150,6 @@ class ControlCentre:
                 CEC = (proximity * self.wEnergy) + (urgency * self.wUrgency)
                 urgencyList[ev] = CEC
 
-                # sort by value, needs lambda because default dictionary sort is by key, reverse order means largest first
-                #urgencyList = dict(sorted(urgencyList.items(), key=lambda item: item[1]))
         return urgencyList
 
     def findEdgePos( self, evID, deltaPos ):
@@ -192,6 +190,7 @@ class ControlCentre:
 
     def findRendezvousXY( self, ev, drone ):
         """estimate a direct rendezvous point for the drone/vehicle - assumes constant vehicle speed
+              apply a factor of 90% to allow for acceleration/deceleration/% of time not at allowed speed
            algorithm from https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
         """
         evID = ev.getID()         # needed for Traci calls
@@ -270,8 +269,7 @@ class ControlCentre:
         return neighbours, meanDist
 
     def notifyDroneState(self,drone):
-        """Notification from Drone when charging finished or Drone has broken off the charge
-             ought to 'case' on the Drone state for clarity"""
+        """Notification from Drone when charging finished or Drone has broken off the charge"""
         if drone in self.allocatedDrone:
             del self.allocatedEV[self.allocatedDrone[drone]]
             del self.allocatedDrone[drone]
@@ -283,7 +281,7 @@ class ControlCentre:
             self.needChargeDrones.add(drone)
 
     def notifyEVState(self,ev,evState,droneID,capacity):
-        """Notification from EV - when EV has left simulation (or completed charge?)"""
+        """Notification from EV - when EV has left simulation (or completed charge)"""
         charge = 0.0
         match evState:
             case EV.EVState.DRIVING:            # means charge complete  so calculate charge
@@ -318,7 +316,7 @@ class ControlCentre:
         if self.chargePrint:
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep,ev.getID(),evState,droneID,capacity,charge),file=self.chargeLog)
 
-    def printDroneStatistics(self,brief,sumoCmd,script,version):
+    def printDroneStatistics(self,brief,version):
         """Print out Drone and EV statistics for the complete run"""
         #  compute drone statistic totals
         tmyFlyingCount = 0           # used to compute distance travelled
@@ -372,10 +370,10 @@ class ControlCentre:
                 averageChase = 0
 
         timeStamp = datetime.now().isoformat()
-        sumoVersion = traci.getVersion()
-
         # all done, dump the distance travelled by the drones and KW used
         if brief:
+            sumoVersion = traci.getVersion()
+            runstring = sys.argv
             print("Date\tRv\tOnce\tOutput\twE\twU\tradius\tSteps\t#Drones"
                   "\tDistance\tFlyKWh\tchKWh\tFlyChgKWh\tChgKWh\trFlyKWh\trChKWh"
                   "\t#EVs\tEVChg\tEVgap\tFull\tbrDrone\tbrEV\tChases\tAvg Chase\tBrk Chase")
@@ -390,9 +388,9 @@ class ControlCentre:
             print("\t{:.0f}\t{:.0f}\t{:.0f}".format(tmyFullCharges, tmyBrokenCharges,tmyBrokenEVCharges),end="")
 
             if GG.ss.modelRendezvous:
-                print("\t{}\t{:.0f}\t{}\t{}\t{}\t{}\t{}".format(tmyChaseCount,averageChase,tmyBrokenChaseCount,sumoCmd,script,version,sumoVersion))
+                print("\t{}\t{:.0f}\t{}\t{}\t{}\t{}".format(tmyChaseCount,averageChase,tmyBrokenChaseCount,runstring,version,sumoVersion))
             else:
-                print("\t\t\t\t{}\t{}\t{}\t{}".format(sumoCmd,script,version,sumoVersion))
+                print("\t\t\t\t{}\t{}\t{}".format(runstring,version,sumoVersion))
 
         else:
             print("\nSummary Statistics:\t\t",timeStamp)

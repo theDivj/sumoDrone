@@ -7,19 +7,16 @@ from GlobalClasses import GlobalClasses as GG
 from ChargeHubs import ChargeHubs
 from ControlCentre import ControlCentre
 from Simulation import Simulation
-
 """
     sample traci code - using a POI to represent a drone able to fly outside the network and track specific vehicles
                             network needs charging stations to launch and recharge drones
    run as:
-        python drclass.py [-h] [-v] [-m] [-l] [-d n] [-b] [-e n] [-s sumo.exe] [-p metres] [-wu n.n] [-we n.n] [-o filePath] [-c filePath] xxx.sumocfg
-                    where:    xxx.sumocfg      is the sumo configuration file
-
+      python drclass.py [-h] [-v] [-m] [-l] [-d n] [-b] [-e n] [-s sumo.exe] [-p metres] [-wu n.n] [-we n.n] [-o filePath] [-c filePath] [-r n] [-k n] sumocfg
 
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = ' 3.1 29th February 2024'
+__version__ = ' 3.0 1st March 2024'
 #
 #  v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -46,7 +43,7 @@ class drClass:
         """Print statistics and close any files"""
         # output statistics
         if GG.cc is not None:
-            GG.cc.printDroneStatistics(drClass.briefStatistics,drClass.sumoCmd,__file__,__version__)
+            GG.cc.printDroneStatistics(drClass.briefStatistics,__version__)
 
         # tidy up
         if drClass.dronePrint:

@@ -22,7 +22,7 @@ class Drone:
     parkAtHome = False      # option to force parking/charging back to the charge hub where drone started
 
     # class variables
-    droneKMperh = 60.0                                              # drone cruising speed
+    droneKMperh = 60.0      # drone cruising speed
     droneMperSec = droneKMperh/3.6
     droneStepMperTimeStep = droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
     droneStepM2 = droneStepMperTimeStep * droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
@@ -112,7 +112,7 @@ class Drone:
             self.setViableCharge()
 
     def fly(self,pos):
-        """move the drone along a straight line to pos by the amount Drone can move in a timeStep
+        """move the drone along a straight line to pos by the amount Drone can move in a timeStep,
             returns True if we've arrived at pos, False otherwise
         """
         dx,dy = self.myPosition

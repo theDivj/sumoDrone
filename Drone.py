@@ -89,7 +89,7 @@ class Drone:
         # EV charging battery size is constrained by drone carrying capacity * average battery energy density (currently ~150Wh/Kg)
         match droneType:
             case "ehang184":
-                Drone.droneChargeWh = 15000.                      # capacity of battery used to charge ev's, based on Ehang 184 load capacity - 200Kg
+                Drone.droneChargeWh = 30000.                      # capacity of battery used to charge ev's, based on Ehang 184 load capacity - 200Kg
                 Drone.droneFlyingWh = 14400.                      # capacity of battery used to power drone
                 Drone.droneFlyingWhperTimeStep = Drone.droneFlyingWh / (23 * 60.)   # Ehang 184 has battery capacity of 14.4 KW giving 23 mins flight time
                 Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
@@ -214,7 +214,7 @@ class Drone:
             lane = ""
             lanePos = ""
         print("{:.1f}\t{}\t{}\t{}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format
-              (GG.ss.timeStep, self.myID, evID, lane, lanePos, x, y, self.myChargingWh, self.myCharge, self.myFlyingCharge, activity), file=GG.ss.droneLog)
+              (GG.ss.timeStep, self.myID, evID, lane, lanePos, x, y, self.myChargingWh, self.myCharge, self.myFlyingCharge, activity), file=GG.droneLog)
 
     def notifyChase(self, chaseOK, chaseSteps):
         """from EV updating chases by this drone"""

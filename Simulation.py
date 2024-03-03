@@ -10,23 +10,19 @@ class Simulation:
     # Basic simulation parameters
     modelRendezvous = True  # whether we estimate a rendezvous point for drone/ev
     onlyChargeOnce = True   # whether we are allowed to charge EVs more than once in a simulation
-    dronePrint = False      # whether we output a file of drone position and charge levels at each step
-    droneLog = ""           #   name of the output file
     maxEVs = sys.maxsize    # default to no limit on the number of EVs we will shadow - does not impact the actual no of EVs in the simulation
     stepSecs = 1.0          # Real length modelled by each simulation step - we can only know this when the simulation starts
 
     timeStep = 0            # running count of simulation steps
     EVs = {}                # collection for the EVs we are managing
 
-    def __init__(self,sumoCmd,modelRendezvous,onlyChargeOnce,maxEVs,dronePrint,droneLog):
+    def __init__(self,sumoCmd,modelRendezvous,onlyChargeOnce,maxEVs):
         traci.start(sumoCmd)  #  traceFile="./tracilog.txt")
         self.stepSecs = traci.simulation.getDeltaT()
         Drone.stepSecsAdjust(self.stepSecs)
         Simulation.modelRendezvous = modelRendezvous
         Simulation.onlyChargeOnce = onlyChargeOnce
         Simulation.maxEVs = maxEVs
-        Simulation.dronePrint = dronePrint
-        Simulation.droneLog = droneLog
 
     def __del__(self):
         traci.close()

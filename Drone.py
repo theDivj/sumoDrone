@@ -5,6 +5,7 @@ import traci
 from GlobalClasses import GlobalClasses as GG
 from EV import EV
 
+
 class Drone:
     """Drone class - main parameters based on based on Ehang 184 which has top speed of 60km/h, battery capacity of 14.4 KW giving 23 mins flight time"""
     class DroneState(Enum):
@@ -21,28 +22,28 @@ class Drone:
     droneIDCount = 0
     parkAtHome = False      # option to force parking/charging back to the charge hub where drone started
 
-    # class variables
+    # Drone specific class variables
     droneKMperh = 60.0      # drone cruising speed
-    droneMperSec = droneKMperh/3.6
-    droneStepMperTimeStep = droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
-    droneStepM2 = droneStepMperTimeStep * droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
-
     droneChargeWh = 30000.            # capacity of battery used to charge ev's  - guess based on Ehang 184 load capacity
     droneFlyingWh = 14400.            # capacity of battery used to power drone
-    droneFlyingWhperTimeStep = droneFlyingWh / ( 23 * 60. )   # power usage based on Ehang 184 which has battery capacity of 14.4 KW giving 23 mins flight time
+    droneFlyingWhperTimeStep = droneFlyingWh / (23 * 60.)   # power usage based on Ehang 184 which has battery capacity of 14.4 KW giving 23 mins flight time
     droneChargeContingencyp = 0.05    # minimum contingency level %
-    droneChargeViablep  = 0.3         # minimum viable level %
+    droneChargeViablep = 0.3          # minimum viable level %
+    WhEVChargeRatePerTimeStep = 25000. / 3600                       # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+    WhDroneRechargePerTimeStep = 75000. / 3600                      # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+
+    # Derived class variables
+    droneMperSec = droneKMperh / 3.6
+    droneStepMperTimeStep = droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
+    droneStepM2 = droneStepMperTimeStep * droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
     minDroneCharge = droneChargeContingencyp    * droneChargeWh     # Thresholds to break off charging/flying
     minDroneFlyingWh = droneChargeContingencyp  * droneFlyingWh
     viableDroneCharge = droneChargeViablep      * droneChargeWh     # thresholds to allow allocation - ie enough charge to be useful
     viableDroneFlyingWh = droneChargeViablep    * droneFlyingWh
-    droneStepMperTimeStep = droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
-    droneStepM2 = droneStepMperTimeStep * droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
-    WhEVChargeRatePerTimeStep = 25000. / 3600                       # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
-    WhDroneRechargePerTimeStep = 75000. / 3600                      # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
 
-    def __init__(self, pos):
+    def __init__(self, pos, droneType="ehang184"):
         Drone.droneIDCount += 1
+        Drone.setDroneType(droneType)
         self.myID = "d" + str(Drone.droneIDCount)
         self.myPosition = pos
         self.myParkPosition = self.myPosition
@@ -53,15 +54,15 @@ class Drone:
         self.myEV = None
         # reset drone speed factors with any runstring override
         Drone.droneKMperh = GG.getDroneSpeed()
-        Drone.droneMperSec = Drone.droneKMperh/3.6
+        Drone.droneMperSec = Drone.droneKMperh / 3.6
         Drone.droneStepMperTimeStep = Drone.droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
         Drone.droneStepM2 = Drone.droneStepMperTimeStep * Drone.droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
 
         # logging variables
         self.myFlyingCount = 0            # used to compute distance travelled
-        self.myFullCharges = 0             #  count of complete charges
-        self.myBrokenCharges = 0           #  count of charges broken off - by me out of charge
-        self.myBrokenEVCharges = 0         #  count of charges broken off - by EV (leaving)
+        self.myFullCharges = 0             # count of complete charges
+        self.myBrokenCharges = 0           # count of charges broken off - by me out of charge
+        self.myBrokenEVCharges = 0         # count of charges broken off - by EV (leaving)
         self.myFlyingWh = 0.0              # wH i've used flying
         self.myChargingWh = 0.0            # wH i've used charging EVs
         self.myChargeMeFlyingCount = 0.0   # wh i've charged my flying battery
@@ -69,17 +70,52 @@ class Drone:
         self.myChaseCount = 0              # count of complete chases - ie got from rendezvous to ev
         self.myBrokenChaseCount = 0        # count of broken chases where we didn't get to ev before it left sim
         self.myChaseSteps = 0              # count of steps in all complete chases - used with myChaseCount to compute average
+        self.myRequestedCharge = 0         # the amount of charge requested by the EV
         # finally create the POI representing our drone
-        traci.poi.add(self.myID, pos[0], pos[1], color=(0,0,255,255), layer=250, imgFile=".\\drone.png", width=10, height=10)
+        traci.poi.add(self.myID, pos[0], pos[1], color=(0, 0, 255, 255), layer=250, imgFile=".\\drone.png", width=10, height=10)
 
-    def __lt__(self,other):
+    def __lt__(self, other):
         return int(self.myID[1:]) < int(other.myID[1:])
 
     def __str__(self):
         return self.myID
 
     @classmethod
-    def stepSecsAdjust(cls,stepSecs):
+    def setDroneType(cls, droneType="ehang184"):
+        """Support different drone definitions - initially to give us a drone that doesn't need charging"""
+
+        Drone.droneKMperh = GG.getDroneSpeed()  # get speed override if any
+
+        # EV charging battery size is constrained by drone carrying capacity * average battery energy density (currently ~150Wh/Kg)
+        match droneType:
+            case "ehang184":
+                Drone.droneChargeWh = 15000.                      # capacity of battery used to charge ev's, based on Ehang 184 load capacity - 200Kg
+                Drone.droneFlyingWh = 14400.                      # capacity of battery used to power drone
+                Drone.droneFlyingWhperTimeStep = Drone.droneFlyingWh / (23 * 60.)   # Ehang 184 has battery capacity of 14.4 KW giving 23 mins flight time
+                Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
+                Drone.droneChargeViablep = 0.3                    # minimum viable level %
+                Drone.WhEVChargeRatePerTimeStep = 25000. / 3600   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+                Drone.WhDroneRechargePerTimeStep = 75000. / 3600  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+
+            case "ehang184x":            # ehang 184 with artificially increased battery sizes so they don't need recharging
+                Drone.droneChargeWh = 3000000.     # 100 * actual
+                Drone.droneFlyingWh = 14400000.
+                Drone.droneFlyingWhperTimeStep = 14400 / (23 * 60.)
+                Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
+                Drone.droneChargeViablep = 0.3                    # minimum viable level %
+                Drone.WhEVChargeRatePerTimeStep = 25000. / 3600   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+                Drone.WhDroneRechargePerTimeStep = 75000. / 3600  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+
+        Drone.droneMperSec = Drone.droneKMperh / 3.6
+        Drone.droneStepMperTimeStep = Drone.droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
+        Drone.droneStepM2 = Drone.droneStepMperTimeStep * Drone.droneStepMperTimeStep     # precompute - used in distance calculations  (adjust for timeStep when simulation starts)
+        Drone.minDroneCharge = Drone.droneChargeContingencyp    * Drone.droneChargeWh     # Thresholds to break off charging/flying
+        Drone.minDroneFlyingWh = Drone.droneChargeContingencyp  * Drone.droneFlyingWh
+        Drone.viableDroneCharge = Drone.droneChargeViablep      * Drone.droneChargeWh     # thresholds to allow allocation - ie enough charge to be useful
+        Drone.viableDroneFlyingWh = Drone.droneChargeViablep    * Drone.droneFlyingWh
+
+    @classmethod
+    def stepSecsAdjust(cls, stepSecs):
         """ adjust timestep class variables for the actual timestep = no change when timeStep = 1sec"""
         Drone.droneStepMperTimeStep *= stepSecs
         Drone.droneStepM2 = Drone.droneStepMperTimeStep * Drone.droneStepMperTimeStep  # precompute - used in distance calculations
@@ -87,14 +123,15 @@ class Drone:
         Drone.WhEVChargeRatePerTimeStep *= stepSecs
         Drone.WhDroneRechargePerTimeStep *= stepSecs
 
-    def allocate(self,ev):
+    def allocate(self, ev, requestedCharge ):
         """allocate this instance to an EV"""
         self.myEV = ev
-        traci.poi.setParameter(self.myID,"status","allocated to " + ev.getID())
+        traci.poi.setParameter(self.myID, "status", "allocated to " + ev.getID())
         if GG.ss.modelRendezvous:
             self.myState = Drone.DroneState.FLYINGTORENDEZVOUS
         else:
             self.myState = Drone.DroneState.FLYINGTOEV
+        self.myRequestedCharge = requestedCharge
         return True
 
     def chargeMe(self):
@@ -106,25 +143,25 @@ class Drone:
             self.myFlyingCharge += Drone.WhDroneRechargePerTimeStep
             self.myChargeMeFlyingCount += 1
         elif self.myCharge >= Drone.droneChargeWh:
-            #self.myCharge = Drone.droneChargeWh
-            #self.myFlyingCharge = Drone.droneFlyingWh
+            # self.myCharge = Drone.droneChargeWh
+            # self.myFlyingCharge = Drone.droneFlyingWh
             self.myState = Drone.DroneState.NULL
             self.setViableCharge()
 
-    def fly(self,pos):
+    def fly(self, pos):
         """move the drone along a straight line to pos by the amount Drone can move in a timeStep,
             returns True if we've arrived at pos, False otherwise
         """
-        dx,dy = self.myPosition
-        px,py = pos
+        dx, dy = self.myPosition
+        px, py = pos
 
-        ddy = py-dy
-        ddx = px-dx
+        ddy = py - dy
+        ddx = px - dx
         try:
-            dydx = ddy/ddx
-            x = abs( math.sqrt( self.droneStepM2 / (1.0 + dydx * dydx ) ) )
-            y = abs( x * dydx )
-        except (ValueError,ZeroDivisionError):    #  assume either x or y positions are equal
+            dydx = ddy / ddx
+            x = abs(math.sqrt(self.droneStepM2 / (1.0 + dydx * dydx)))
+            y = abs(x * dydx)
+        except (ValueError, ZeroDivisionError):    # assume either x or y positions are equal
             if dx == px:
                 if dy == py:
                     x = 0.
@@ -143,19 +180,19 @@ class Drone:
         else:
           x = dx - x
 
-        if abs(ddy) <= y:   ## will reach py in this step so set to ~exact distance
+        if abs(ddy) <= y:   # # will reach py in this step so set to ~exact distance
           y = py + 0.001
         elif ddy > 0:
           y += dy
         else:
           y = dy - y
 
-        traci.poi.setPosition(self.myID,x,y)
-        self.myPosition = (x,y)
+        traci.poi.setPosition(self.myID, x, y)
+        self.myPosition = (x, y)
 
-        if ( abs(x - px) + abs( y - py ) ) < 5.0:    # we've arrived at px,py  - arbitrary 5m - two car kengths
+        if (abs(x - px) + abs(y - py)) < 5.0:    # we've arrived at px, py  - arbitrary 5m - two car kengths
             return True
-        return False                            #  we haven't got anywhere yet!
+        return False                            # we haven't got anywhere yet!
 
     def getID(self):
         """getter for Drone SUMO ID"""
@@ -165,9 +202,9 @@ class Drone:
         """getter for position"""
         return self.myPosition
 
-    def logLine(self,activity):
+    def logLine(self, activity):
         """Output discrete changes in charge levels for this drone"""
-        x,y = self.myPosition
+        x, y = self.myPosition
         if self.myEV is not None:
             evID = self.myEV.getID()
             lane = traci.vehicle.getLaneID(evID)
@@ -176,10 +213,10 @@ class Drone:
             evID = ""
             lane = ""
             lanePos = ""
-        print("{:.1f}\t{}\t{}\t{}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format\
-          (GG.ss.timeStep,self.myID,evID,lane,lanePos,x,y,self.myChargingWh,self.myCharge,self.myFlyingCharge,activity), file=GG.ss.droneLog)
+        print("{:.1f}\t{}\t{}\t{}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format
+              (GG.ss.timeStep, self.myID, evID, lane, lanePos, x, y, self.myChargingWh, self.myCharge, self.myFlyingCharge, activity), file=GG.ss.droneLog)
 
-    def notifyChase(self,chaseOK,chaseSteps):
+    def notifyChase(self, chaseOK, chaseSteps):
         """from EV updating chases by this drone"""
         if chaseOK:
             self.myChaseCount += 1
@@ -187,14 +224,9 @@ class Drone:
         else:
             self.myBrokenChaseCount += 1
 
-    def notifyEVFinished(self,evState):
+    def notifyEVFinished(self, evState):
         """EV tells us that it is charged or has left simulation so free self up"""
-        self.setMyParkPosition()
-        self.myState = Drone.DroneState.FLYINGTOPARK
-        traci.poi.setParameter(self.myID,"status","Flying to park")
-        GG.cc.notifyDroneState(self)
-        self.myEV = None
-
+        self.park()
         match evState:
             case EV.EVState.LEFTSIMULATION:
                 self.myBrokenEVCharges += 1
@@ -203,6 +235,14 @@ class Drone:
 
             case EV.EVState.DRIVING:
                 self.myFullCharges += 1
+
+    def park(self):
+        """charge finished so park drone"""
+        self.setMyParkPosition()
+        self.myState = Drone.DroneState.FLYINGTOPARK
+        traci.poi.setParameter(self.myID, "status", "Flying to park")
+        GG.cc.notifyDroneState(self)
+        self.myEV = None
 
     def parkingUpdate(self):
         """secondary update - invoked when Control centre is managing drone"""
@@ -216,90 +256,90 @@ class Drone:
     def setMyParkPosition(self):
         """configure my parking/charging position"""
         if not Drone.parkAtHome:   # then we park at nearest hub
-            (x,y,e,p),distance = GG.ch.nearestHubLocation(self.myPosition)
-            self.myParkPosition = (x,y)
+            (x, y, e, p), distance = GG.ch.nearestHubLocation(self.myPosition)
+            self.myParkPosition = (x, y)
 
     def setViableCharge(self):
         """Check charge levels and see if we are viable - ie can be allocated"""
-        if self.myCharge >= Drone.viableDroneCharge  and self.myFlyingCharge >= Drone.viableDroneFlyingWh:
+        if self.myCharge >= Drone.viableDroneCharge and self.myFlyingCharge >= Drone.viableDroneFlyingWh:
             if not self.myViableCharge:
                 self.myViableCharge = True
                 GG.cc.notifyDroneState(self)  # cc only interested when we become viable
-                traci.poi.setColor(self.myID,(0,0,255,255))
+                traci.poi.setColor(self.myID, (0, 0, 255, 255))
         else:
             self.myViableCharge = False
 
-    def update(self,pos):
+    def update(self, pos):
         """primary update - invoked when EV is managing drone"""
         updateStatus = True
         match self.myState:
             case Drone.DroneState.PARKED:
                 self.chargeMe()            # add charge upto limit because we can
-                if GG.ss.dronePrint:
+                if GG.dronePrint:
                     self.logLine("Parked")
 
             case Drone.DroneState.FLYINGTORENDEZVOUS:
                 self.usePower("fly")
                 if self.fly(pos):
-                    self.myState = Drone.DroneState.FLYINGTOEV
-                    if GG.ss.dronePrint:
-                        self.logLine("Arrived at rendezvous")
+                    if self.myEV is not None:   # usePower might have broken off after using power and set myEV to None
+                        self.myState = Drone.DroneState.FLYINGTOEV
+                        if GG.dronePrint:
+                            self.logLine("Arrived at rendezvous")
                 else:
                     updateStatus = False
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("flying to rendezvous")
 
-            case Drone.DroneState.FLYINGTOEV:               # note that previous version did not count power/distance used in arriving at ev
+            case Drone.DroneState.FLYINGTOEV:
                 self.usePower("fly")
                 if self.fly(pos):
-                    if self.myEV is None:
-                        print("assuming ev left sim",GG.ss.timeStep,self.myID)
-                        self.notifyEVFinished(EV.EVState.LEFTSIMULATION)
-                    else:
-                        traci.poi.setParameter(self.myID,"status","charging:" + self.myEV.getID())
+                    if self.myEV is not None:   # usePower might have broken off after using power and set myEV to None
+                        traci.poi.setParameter(self.myID, "status", "charging:" + self.myEV.getID())
                         self.myState = Drone.DroneState.CHARGINGEV
-                        if GG.ss.dronePrint:
+                        if GG.dronePrint:
                             self.logLine("arrived at ev")
                 else:
                     updateStatus = False
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("flying to ev")
 
             case Drone.DroneState.CHARGINGEV:
-                self.fly(pos)
-                self.usePower("chargeEV")
-                updateStatus = Drone.WhEVChargeRatePerTimeStep
-                if GG.ss.dronePrint:
+                self.fly(pos)                             # 'fly' in this case is just moving with attached to the ev
+                if self.usePower("chargeEV"):             # False when charge broken off or completed
+                    updateStatus = Drone.WhEVChargeRatePerTimeStep
+                else:
+                    updateStatus = False
+                if GG.dronePrint:
                     self.logLine("charging EV")
 
             case Drone.DroneState.CHARGINGDRONE:
                 self.chargeMe()
-                if GG.ss.dronePrint:
+                if GG.dronePrint:
                     self.logLine("charging self")
 
             case Drone.DroneState.FLYINGTOCHARGE:   # note that previous version did not count power/distance used in arriving at hub
                 self.usePower("")
                 if self.fly(self.myParkPosition):
-                    traci.poi.setParameter(self.myID,"status","parked - needs charge")
-                    traci.poi.setColor(self.myID,(0,255,0,255))
+                    traci.poi.setParameter(self.myID, "status", "parked - needs charge")
+                    traci.poi.setColor(self.myID, (0, 255, 0, 255))
                     self.myState = Drone.DroneState.CHARGINGDRONE
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("arrived at charge hub")
                 else:
                     updateStatus = False
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("flying to charge hub")
 
             case Drone.DroneState.FLYINGTOPARK:     # note that previous version did not count power/distance used in arriving at hub
                 self.usePower("fly")
                 if self.fly(self.myParkPosition):
-                    traci.poi.setParameter(self.myID,"status","Parked")
+                    traci.poi.setParameter(self.myID, "status", "Parked")
                     self.myState = Drone.DroneState.PARKED
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("arrived at hub")
                 else:
                     updateStatus = False
-                    if GG.ss.dronePrint:
+                    if GG.dronePrint:
                         self.logLine("flying to hub")
 
             case Drone.DroneState.NULL:  # am charged so do nothing until allocated
@@ -307,7 +347,7 @@ class Drone:
 
         return updateStatus
 
-    def usePower(self,mode):
+    def usePower(self, mode):
         """Am flying or charging an EV so adjust my charge levels"""
         breakOff = False
         match mode:
@@ -317,9 +357,17 @@ class Drone:
                 self.myFlyingCount += 1
                 if self.myFlyingCharge < Drone.minDroneFlyingWh:
                     breakOff = True
+
             case "chargeEV":
                 self.myCharge -= Drone.WhEVChargeRatePerTimeStep
                 self.myChargingWh += Drone.WhEVChargeRatePerTimeStep
+                self.myRequestedCharge -= Drone.WhEVChargeRatePerTimeStep
+                if self.myRequestedCharge <= 0:    #  we've charged the requested amount
+                    self.myEV.stopCharging(0)   # don't clear, full charge
+                    self.myFullCharges += 1
+                    self.myRequestedCharge = 0
+                    self.park()
+                    return False      # ie we're not returning a charge
                 if self.myCharge < Drone.minDroneCharge:
                     breakOff = True
             case _:
@@ -330,13 +378,16 @@ class Drone:
         # problem - one of my batteries below contingency
         if breakOff:
             if self.myEV:
-                self.myEV.stopCharging(False)
+                request = int(self.myRequestedCharge + 1)
+                self.myEV.stopCharging(request)   # tell EV how much charge we still need to apply to fulfil original request
                 self.myEV = None
                 self.myBrokenCharges += 1
+
+            self.myRequestedCharge = 0
             self.myViableCharge = False
             self.setMyParkPosition()
-            traci.poi.setColor(self.myID,(255,0,0,255))
-            traci.poi.setParameter(self.myID,"status","Flying to charge")
+            traci.poi.setColor(self.myID, (255, 0, 0, 255))
+            traci.poi.setParameter(self.myID, "status", "Flying to charge")
             self.myState = Drone.DroneState.FLYINGTOCHARGE
             GG.cc.notifyDroneState(self)
             return False

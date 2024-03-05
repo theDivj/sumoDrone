@@ -78,7 +78,7 @@ class Drone:
         self.myRequestedCharge = 0         # the amount of charge requested by the EV
         self.myDummyEVInserted = False     # whether the dummy EVs have been inserted
         # finally create the POI representing our drone
-        traci.poi.add(self.myID, pos[0], pos[1], color=(0, 0, 255, 255), layer=250, imgFile=".\\drone.png", width=10, height=10)
+        traci.poi.add(self.myID, pos[0], pos[1], color=(0, 0, 255, 255), layer=250, imgFile="drone.png", width=10, height=10)
 
     def __lt__(self, other):
         return int(self.myID[1:]) < int(other.myID[1:])

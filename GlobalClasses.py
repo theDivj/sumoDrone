@@ -8,13 +8,16 @@ class GlobalClasses:
     ss = None   # Simulation
     ch = None   # ChargeHubs
 
-    chargePrint = False
-    chargeLog = None
-    dronePrint = False
-    droneLog = None
+    modelRendezvous = True  # whether we estimate a rendezvous point for drone/ev
+    onlyChargeOnce = True   # whether we are allowed to charge EVs more than once in a simulation
+    chargePrint = False     # Whether to print a charging log
 
-    droneKmPerHr = 60.0
-    useRandom = False
+    chargeLog = None        # Filename for the charging log
+    dronePrint = False      # Whether to print a drone activity log
+    droneLog = None         # Filename for the drone log
+
+    droneKmPerHr = 60.0     # default drone speed - to allow command line override
+    useRandom = False       # whether to generate 'random' charge requests
 
     def __init__(self, cc, ss, ch):
         GlobalClasses.cc = cc
@@ -28,13 +31,15 @@ class GlobalClasses:
 
     @classmethod
     def getRandom(cls):
-        """return a random no"""
+        """return a random no!"""
         return random.random()
 
     @classmethod
-    def setGlobals(cls, droneKmPerHr, randomSeed, droneLog, chargeLog):
+    def setGlobals(cls, droneKmPerHr, randomSeed, droneLog, chargeLog, onlyChargeOnce, modelRendezvous):
         """initialise globals used across drone,ev,controlcentre"""
         GlobalClasses.droneKmPerHr = droneKmPerHr
+        GlobalClasses.onlyChargeOnce = onlyChargeOnce
+        GlobalClasses.modelRendezvous = modelRendezvous
 
         if randomSeed != 0:
             random.seed(randomSeed)

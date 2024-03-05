@@ -65,10 +65,8 @@ class EV:
         # We want to support ev requesting enough charge to get to destination
         # or to a charge point - meaning that a charge request will have a varying amount
         # allowing allocation of a drone with sufficient capacity to satisfy the request
-        # This means we stop charging at a request specific charge done threshold
-        # also means we need to remember the size of the request so we can set my
-        # charge done threshold *when we start charging* by adding the request to the
-        # current capacity when the drone arrives  - (setLastChargeRequest to be implemented for this)
+        #    (setLastChargeRequest implementation needs extension to calculate specific charge needed)
+        # Drone is now responsible for stopping charging after delivering requested amount
         self.myChargeDone = EV.chargeDoneThreshold
         self.myLastChargeRequest = EV.evChargeRequestWh  # default
         EV.evCount += 1
@@ -83,9 +81,8 @@ class EV:
         return self.myID
 
     def allocate(self, drone, rvPos):
-        """save the drone/ev relationship and set rendezvous position if necessary"""
-        if GG.ss.modelRendezvous:
-            self.myRendezvous = rvPos
+        """save the drone/ev relationship and set rendezvous position - may be None"""
+        self.myRendezvous = rvPos
         self.myDrone = drone
 
     def captureStats(self):
@@ -114,12 +111,12 @@ class EV:
         """Work out how much charge (in Wh) is needed"""
         # currently varies if randomseed is passed in runString - otherwise just the EV value
         self.myLastChargeRequest = self.myevChargeRequestWh
-        self.myChargeDone = self.myCapacity + self.myevChargeRequestWh
+        self.myChargeDone = self.myCapacity + self.myevChargeRequestWh   # not actually used at the moment - drone cuts off after delivering requested charge
 
     def setMyPosition(self):
         """get real EV position from simulation and set my variable"""
         if self.myState == EV.EVState.WAITINGFORRENDEZVOUS:     # never called from this state so
-            self.myDrone.notifyChase(False, self.myChaseSteps)   # must be failed chase
+            self.myDrone.notifyChase(False, self.myChaseSteps)  # must be failed chase
         self.myPosition = traci.vehicle.getPosition(self.myID)
 
     def stopCharging(self, remainingCharge):
@@ -129,21 +126,21 @@ class EV:
                 self.myState = EV.EVState.CHARGEREQUESTED
                 GG.cc.notifyEVState(self,EV.EVState.CHARGEBROKENOFF, self.myDrone.getID(), self.myCapacity)
                 GG.cc.requestCharge(self, self.myCapacity, remainingCharge)
-            else:
+                self.myDrone = None
+            else:       # charge completed so log charge
+                self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
+                GG.cc.notifyEVState(self, self.myState, self.myDrone.getID(), self.myCapacity)
                 self.myState = EV.EVState.DRIVING
-        else:
+                self.myDrone = None
+        else:   # not yet got to EV
             self.myState = EV.EVState.DRIVING
+            self.myDrone = None
 
     def update(self):
         """Implementation of EV state model - called in each simulation step"""
         match self.myState:
             case EV.EVState.DRIVING:
-                if self.myDrone is not None:   # if drone triggers move to this state by finishing charge or breaking off the reference is not cleared
-                    self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
-                    GG.cc.notifyEVState(self, self.myState, self.myDrone.getID(), self.myCapacity)
-                    self.myDrone = None
-
-                if (self.myChargeCount < 1) or (not GG.ss.onlyChargeOnce):
+                if (self.myChargeCount < 1) or (not GG.onlyChargeOnce):
                     self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
                     if self.myCapacity < self.myChargeNeededThreshold:
                         self.setMyPosition()
@@ -154,7 +151,7 @@ class EV:
 
             case EV.EVState.CHARGEREQUESTED:
                 if self.myDrone:
-                    if GG.ss.modelRendezvous:
+                    if GG.modelRendezvous:
                       self.myDrone.update(self.myRendezvous)
                       self.myChaseSteps = 0
                       self.myState = EV.EVState.WAITINGFORRENDEZVOUS
@@ -171,18 +168,19 @@ class EV:
             case EV.EVState.WAITINGFORDRONE:
                 self.setMyPosition()
                 self.myChaseSteps += 1
-                if self.myDrone.update(self.myPosition):
-                    if self.myState == EV.EVState.WAITINGFORDRONE:       # drone.update could have called EV.stopCharging
-                        self.myDrone.notifyChase(True, self.myChaseSteps)
-                        traci.vehicle.setColor(self.myID, (0, 255, 0, 255))  # green
-                        self.myState = EV.EVState.CHARGINGFROMDRONE
-                        self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
-                        GG.cc.notifyEVState(self, self.myState, self.myDrone.getID(), self.myCapacity)
-                        self.myChargeDone = self.myCapacity + self.myLastChargeRequest # not quite right yet the charge will include usage whilst rendezvousing and charging
-                    else:   # failed chase because drone broke off and changed my state via EV.stopCharging
-                        self.myDrone.notifyChase(False, self.myChaseSteps)
-                        traci.vehicle.setColor(self.myID, self.myColour)
-                        self.myDrone = None
+                if self.myDrone:
+                    if self.myDrone.update(self.myPosition):
+                        if self.myState == EV.EVState.WAITINGFORDRONE:       # drone.update could have called EV.stopCharging
+                            self.myDrone.notifyChase(True, self.myChaseSteps)
+                            traci.vehicle.setColor(self.myID, (0, 255, 0, 255))  # green
+                            self.myState = EV.EVState.CHARGINGFROMDRONE
+                            self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
+                            GG.cc.notifyEVState(self, self.myState, self.myDrone.getID(), self.myCapacity)
+                            self.myChargeDone = self.myCapacity + self.myLastChargeRequest # not quite right yet the charge will include usage whilst rendezvousing and charging
+                        else:   # failed chase because drone broke off and changed my state via EV.stopCharging
+                            self.myDrone.notifyChase(False, self.myChaseSteps)
+                            traci.vehicle.setColor(self.myID, self.myColour)
+                            self.myDrone = None
 
             case EV.EVState.CHARGINGFROMDRONE:
                 self.setMyPosition()
@@ -191,7 +189,6 @@ class EV:
                 if chWh is False:   # either charge is finished or drone has broken off
                     if self.myState == EV.EVState.DRIVING:   # Charge finished
                         traci.vehicle.setColor(self.myID, self.myColour)
-                        GG.cc.notifyEVState(self, self.myState, self.myDrone.getID(), self.myCapacity)
                         self.myDrone = None
                         self.myChargeCount += 1
                     elif self.myState == EV.EVState.CHARGEREQUESTED:     # drone broke off before charge completed

@@ -48,16 +48,37 @@
                                 <a class="variable" href="#GlobalClasses.ch">ch</a>
                         </li>
                         <li>
-                                <a class="variable" href="#GlobalClasses.useRandom">useRandom</a>
+                                <a class="variable" href="#GlobalClasses.modelRendezvous">modelRendezvous</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.onlyChargeOnce">onlyChargeOnce</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.chargePrint">chargePrint</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.chargeLog">chargeLog</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.dronePrint">dronePrint</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.droneLog">droneLog</a>
                         </li>
                         <li>
                                 <a class="variable" href="#GlobalClasses.droneKmPerHr">droneKmPerHr</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#GlobalClasses.useRandom">useRandom</a>
                         </li>
                         <li>
                                 <a class="function" href="#GlobalClasses.getDroneSpeed">getDroneSpeed</a>
                         </li>
                         <li>
                                 <a class="function" href="#GlobalClasses.getRandom">getRandom</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#GlobalClasses.setGlobals">setGlobals</a>
                         </li>
                         <li>
                                 <a class="function" href="#GlobalClasses.usingRandom">usingRandom</a>
@@ -90,40 +111,63 @@ GlobalClasses    </h1>
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;  Static class to support inter-object communication &quot;&quot;&quot;</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">import</span> <span class="nn">random</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="k">class</span> <span class="nc">GlobalClasses</span><span class="p">:</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; globals to support communication between Drones,EVs with control centre and simulation &quot;&quot;&quot;</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>    <span class="n">cc</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ControlCentre</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>    <span class="n">ss</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># Simulation</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>    <span class="n">ch</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ChargeHubs</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="n">useRandom</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>    <span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="mf">60.0</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cc</span><span class="p">,</span><span class="n">ss</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">randomSeed</span><span class="p">,</span><span class="n">droneKmPerHr</span><span class="p">):</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>    <span class="nd">@classmethod</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="nd">@classmethod</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no&quot;&quot;&quot;</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>    <span class="nd">@classmethod</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="k">class</span> <span class="nc">GlobalClasses</span><span class="p">:</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; globals to support communication between Drones, EVs with control centre and simulation &quot;&quot;&quot;</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>    <span class="n">cc</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ControlCentre</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>    <span class="n">ss</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># Simulation</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="n">ch</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ChargeHubs</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>    <span class="n">modelRendezvous</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># whether we estimate a rendezvous point for drone/ev</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="n">onlyChargeOnce</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># whether we are allowed to charge EVs more than once in a simulation</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="n">chargePrint</span> <span class="o">=</span> <span class="kc">False</span>     <span class="c1"># Whether to print a charging log</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="n">chargeLog</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># Filename for the charging log</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>    <span class="n">dronePrint</span> <span class="o">=</span> <span class="kc">False</span>      <span class="c1"># Whether to print a drone activity log</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>    <span class="n">droneLog</span> <span class="o">=</span> <span class="kc">None</span>         <span class="c1"># Filename for the drone log</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>    <span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="mf">60.0</span>     <span class="c1"># default drone speed - to allow command line override</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>    <span class="n">useRandom</span> <span class="o">=</span> <span class="kc">False</span>       <span class="c1"># whether to generate &#39;random&#39; charge requests</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">ss</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>    <span class="nd">@classmethod</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>    <span class="nd">@classmethod</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no!&quot;&quot;&quot;</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>    <span class="nd">@classmethod</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>    <span class="k">def</span> <span class="nf">setGlobals</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">droneKmPerHr</span><span class="p">,</span> <span class="n">randomSeed</span><span class="p">,</span> <span class="n">droneLog</span><span class="p">,</span> <span class="n">chargeLog</span><span class="p">,</span> <span class="n">onlyChargeOnce</span><span class="p">,</span> <span class="n">modelRendezvous</span><span class="p">):</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;initialise globals used across drone,ev,controlcentre&quot;&quot;&quot;</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">onlyChargeOnce</span> <span class="o">=</span> <span class="n">onlyChargeOnce</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">modelRendezvous</span> <span class="o">=</span> <span class="n">modelRendezvous</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>
+</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a>
+</span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a>        <span class="k">if</span> <span class="n">droneLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneLog</span> <span class="o">=</span> <span class="n">droneLog</span>
+</span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">dronePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a>
+</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>        <span class="k">if</span> <span class="n">chargeLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargeLog</span> <span class="o">=</span> <span class="n">chargeLog</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>
+</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>    <span class="nd">@classmethod</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
 </span></pre></div>
 
 
@@ -139,44 +183,65 @@ GlobalClasses    </h1>
 
     </div>
     <a class="headerlink" href="#GlobalClasses"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses-4"><a href="#GlobalClasses-4"><span class="linenos"> 4</span></a><span class="k">class</span> <span class="nc">GlobalClasses</span><span class="p">:</span>
-</span><span id="GlobalClasses-5"><a href="#GlobalClasses-5"><span class="linenos"> 5</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; globals to support communication between Drones,EVs with control centre and simulation &quot;&quot;&quot;</span>
-</span><span id="GlobalClasses-6"><a href="#GlobalClasses-6"><span class="linenos"> 6</span></a>    <span class="n">cc</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ControlCentre</span>
-</span><span id="GlobalClasses-7"><a href="#GlobalClasses-7"><span class="linenos"> 7</span></a>    <span class="n">ss</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># Simulation</span>
-</span><span id="GlobalClasses-8"><a href="#GlobalClasses-8"><span class="linenos"> 8</span></a>    <span class="n">ch</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ChargeHubs</span>
-</span><span id="GlobalClasses-9"><a href="#GlobalClasses-9"><span class="linenos"> 9</span></a>
-</span><span id="GlobalClasses-10"><a href="#GlobalClasses-10"><span class="linenos">10</span></a>    <span class="n">useRandom</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="GlobalClasses-11"><a href="#GlobalClasses-11"><span class="linenos">11</span></a>    <span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="mf">60.0</span>
-</span><span id="GlobalClasses-12"><a href="#GlobalClasses-12"><span class="linenos">12</span></a>
-</span><span id="GlobalClasses-13"><a href="#GlobalClasses-13"><span class="linenos">13</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cc</span><span class="p">,</span><span class="n">ss</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">randomSeed</span><span class="p">,</span><span class="n">droneKmPerHr</span><span class="p">):</span>
-</span><span id="GlobalClasses-14"><a href="#GlobalClasses-14"><span class="linenos">14</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
-</span><span id="GlobalClasses-15"><a href="#GlobalClasses-15"><span class="linenos">15</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
-</span><span id="GlobalClasses-16"><a href="#GlobalClasses-16"><span class="linenos">16</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
-</span><span id="GlobalClasses-17"><a href="#GlobalClasses-17"><span class="linenos">17</span></a>
-</span><span id="GlobalClasses-18"><a href="#GlobalClasses-18"><span class="linenos">18</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GlobalClasses-19"><a href="#GlobalClasses-19"><span class="linenos">19</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
-</span><span id="GlobalClasses-20"><a href="#GlobalClasses-20"><span class="linenos">20</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="GlobalClasses-21"><a href="#GlobalClasses-21"><span class="linenos">21</span></a>
-</span><span id="GlobalClasses-22"><a href="#GlobalClasses-22"><span class="linenos">22</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
-</span><span id="GlobalClasses-23"><a href="#GlobalClasses-23"><span class="linenos">23</span></a>
-</span><span id="GlobalClasses-24"><a href="#GlobalClasses-24"><span class="linenos">24</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses-25"><a href="#GlobalClasses-25"><span class="linenos">25</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses-26"><a href="#GlobalClasses-26"><span class="linenos">26</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses-27"><a href="#GlobalClasses-27"><span class="linenos">27</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
-</span><span id="GlobalClasses-28"><a href="#GlobalClasses-28"><span class="linenos">28</span></a>
-</span><span id="GlobalClasses-29"><a href="#GlobalClasses-29"><span class="linenos">29</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses-30"><a href="#GlobalClasses-30"><span class="linenos">30</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses-31"><a href="#GlobalClasses-31"><span class="linenos">31</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses-32"><a href="#GlobalClasses-32"><span class="linenos">32</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
-</span><span id="GlobalClasses-33"><a href="#GlobalClasses-33"><span class="linenos">33</span></a>
-</span><span id="GlobalClasses-34"><a href="#GlobalClasses-34"><span class="linenos">34</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses-35"><a href="#GlobalClasses-35"><span class="linenos">35</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses-36"><a href="#GlobalClasses-36"><span class="linenos">36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses-37"><a href="#GlobalClasses-37"><span class="linenos">37</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses-6"><a href="#GlobalClasses-6"><span class="linenos"> 6</span></a><span class="k">class</span> <span class="nc">GlobalClasses</span><span class="p">:</span>
+</span><span id="GlobalClasses-7"><a href="#GlobalClasses-7"><span class="linenos"> 7</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; globals to support communication between Drones, EVs with control centre and simulation &quot;&quot;&quot;</span>
+</span><span id="GlobalClasses-8"><a href="#GlobalClasses-8"><span class="linenos"> 8</span></a>    <span class="n">cc</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ControlCentre</span>
+</span><span id="GlobalClasses-9"><a href="#GlobalClasses-9"><span class="linenos"> 9</span></a>    <span class="n">ss</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># Simulation</span>
+</span><span id="GlobalClasses-10"><a href="#GlobalClasses-10"><span class="linenos">10</span></a>    <span class="n">ch</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># ChargeHubs</span>
+</span><span id="GlobalClasses-11"><a href="#GlobalClasses-11"><span class="linenos">11</span></a>
+</span><span id="GlobalClasses-12"><a href="#GlobalClasses-12"><span class="linenos">12</span></a>    <span class="n">modelRendezvous</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># whether we estimate a rendezvous point for drone/ev</span>
+</span><span id="GlobalClasses-13"><a href="#GlobalClasses-13"><span class="linenos">13</span></a>    <span class="n">onlyChargeOnce</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># whether we are allowed to charge EVs more than once in a simulation</span>
+</span><span id="GlobalClasses-14"><a href="#GlobalClasses-14"><span class="linenos">14</span></a>    <span class="n">chargePrint</span> <span class="o">=</span> <span class="kc">False</span>     <span class="c1"># Whether to print a charging log</span>
+</span><span id="GlobalClasses-15"><a href="#GlobalClasses-15"><span class="linenos">15</span></a>
+</span><span id="GlobalClasses-16"><a href="#GlobalClasses-16"><span class="linenos">16</span></a>    <span class="n">chargeLog</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># Filename for the charging log</span>
+</span><span id="GlobalClasses-17"><a href="#GlobalClasses-17"><span class="linenos">17</span></a>    <span class="n">dronePrint</span> <span class="o">=</span> <span class="kc">False</span>      <span class="c1"># Whether to print a drone activity log</span>
+</span><span id="GlobalClasses-18"><a href="#GlobalClasses-18"><span class="linenos">18</span></a>    <span class="n">droneLog</span> <span class="o">=</span> <span class="kc">None</span>         <span class="c1"># Filename for the drone log</span>
+</span><span id="GlobalClasses-19"><a href="#GlobalClasses-19"><span class="linenos">19</span></a>
+</span><span id="GlobalClasses-20"><a href="#GlobalClasses-20"><span class="linenos">20</span></a>    <span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="mf">60.0</span>     <span class="c1"># default drone speed - to allow command line override</span>
+</span><span id="GlobalClasses-21"><a href="#GlobalClasses-21"><span class="linenos">21</span></a>    <span class="n">useRandom</span> <span class="o">=</span> <span class="kc">False</span>       <span class="c1"># whether to generate &#39;random&#39; charge requests</span>
+</span><span id="GlobalClasses-22"><a href="#GlobalClasses-22"><span class="linenos">22</span></a>
+</span><span id="GlobalClasses-23"><a href="#GlobalClasses-23"><span class="linenos">23</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">ss</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+</span><span id="GlobalClasses-24"><a href="#GlobalClasses-24"><span class="linenos">24</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
+</span><span id="GlobalClasses-25"><a href="#GlobalClasses-25"><span class="linenos">25</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
+</span><span id="GlobalClasses-26"><a href="#GlobalClasses-26"><span class="linenos">26</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
+</span><span id="GlobalClasses-27"><a href="#GlobalClasses-27"><span class="linenos">27</span></a>
+</span><span id="GlobalClasses-28"><a href="#GlobalClasses-28"><span class="linenos">28</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses-29"><a href="#GlobalClasses-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses-30"><a href="#GlobalClasses-30"><span class="linenos">30</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses-31"><a href="#GlobalClasses-31"><span class="linenos">31</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
+</span><span id="GlobalClasses-32"><a href="#GlobalClasses-32"><span class="linenos">32</span></a>
+</span><span id="GlobalClasses-33"><a href="#GlobalClasses-33"><span class="linenos">33</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses-34"><a href="#GlobalClasses-34"><span class="linenos">34</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses-35"><a href="#GlobalClasses-35"><span class="linenos">35</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no!&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses-36"><a href="#GlobalClasses-36"><span class="linenos">36</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+</span><span id="GlobalClasses-37"><a href="#GlobalClasses-37"><span class="linenos">37</span></a>
+</span><span id="GlobalClasses-38"><a href="#GlobalClasses-38"><span class="linenos">38</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses-39"><a href="#GlobalClasses-39"><span class="linenos">39</span></a>    <span class="k">def</span> <span class="nf">setGlobals</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">droneKmPerHr</span><span class="p">,</span> <span class="n">randomSeed</span><span class="p">,</span> <span class="n">droneLog</span><span class="p">,</span> <span class="n">chargeLog</span><span class="p">,</span> <span class="n">onlyChargeOnce</span><span class="p">,</span> <span class="n">modelRendezvous</span><span class="p">):</span>
+</span><span id="GlobalClasses-40"><a href="#GlobalClasses-40"><span class="linenos">40</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;initialise globals used across drone,ev,controlcentre&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses-41"><a href="#GlobalClasses-41"><span class="linenos">41</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
+</span><span id="GlobalClasses-42"><a href="#GlobalClasses-42"><span class="linenos">42</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">onlyChargeOnce</span> <span class="o">=</span> <span class="n">onlyChargeOnce</span>
+</span><span id="GlobalClasses-43"><a href="#GlobalClasses-43"><span class="linenos">43</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">modelRendezvous</span> <span class="o">=</span> <span class="n">modelRendezvous</span>
+</span><span id="GlobalClasses-44"><a href="#GlobalClasses-44"><span class="linenos">44</span></a>
+</span><span id="GlobalClasses-45"><a href="#GlobalClasses-45"><span class="linenos">45</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="GlobalClasses-46"><a href="#GlobalClasses-46"><span class="linenos">46</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
+</span><span id="GlobalClasses-47"><a href="#GlobalClasses-47"><span class="linenos">47</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="GlobalClasses-48"><a href="#GlobalClasses-48"><span class="linenos">48</span></a>
+</span><span id="GlobalClasses-49"><a href="#GlobalClasses-49"><span class="linenos">49</span></a>        <span class="k">if</span> <span class="n">droneLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GlobalClasses-50"><a href="#GlobalClasses-50"><span class="linenos">50</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneLog</span> <span class="o">=</span> <span class="n">droneLog</span>
+</span><span id="GlobalClasses-51"><a href="#GlobalClasses-51"><span class="linenos">51</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">dronePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="GlobalClasses-52"><a href="#GlobalClasses-52"><span class="linenos">52</span></a>
+</span><span id="GlobalClasses-53"><a href="#GlobalClasses-53"><span class="linenos">53</span></a>        <span class="k">if</span> <span class="n">chargeLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GlobalClasses-54"><a href="#GlobalClasses-54"><span class="linenos">54</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargeLog</span> <span class="o">=</span> <span class="n">chargeLog</span>
+</span><span id="GlobalClasses-55"><a href="#GlobalClasses-55"><span class="linenos">55</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="GlobalClasses-56"><a href="#GlobalClasses-56"><span class="linenos">56</span></a>
+</span><span id="GlobalClasses-57"><a href="#GlobalClasses-57"><span class="linenos">57</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses-58"><a href="#GlobalClasses-58"><span class="linenos">58</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses-59"><a href="#GlobalClasses-59"><span class="linenos">59</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses-60"><a href="#GlobalClasses-60"><span class="linenos">60</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>globals to support communication between Drones,EVs with control centre and simulation</p>
+            <div class="docstring"><p>globals to support communication between Drones, EVs with control centre and simulation</p>
 </div>
 
 
@@ -184,22 +249,16 @@ GlobalClasses    </h1>
                                         <input id="GlobalClasses.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">GlobalClasses</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">cc</span>, </span><span class="param"><span class="n">ss</span>, </span><span class="param"><span class="n">ch</span>, </span><span class="param"><span class="n">randomSeed</span>, </span><span class="param"><span class="n">droneKmPerHr</span></span>)</span>
+        <span class="name">GlobalClasses</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">cc</span>, </span><span class="param"><span class="n">ss</span>, </span><span class="param"><span class="n">ch</span></span>)</span>
 
                 <label class="view-source-button" for="GlobalClasses.__init__-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#GlobalClasses.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.__init__-13"><a href="#GlobalClasses.__init__-13"><span class="linenos">13</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cc</span><span class="p">,</span><span class="n">ss</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">randomSeed</span><span class="p">,</span><span class="n">droneKmPerHr</span><span class="p">):</span>
-</span><span id="GlobalClasses.__init__-14"><a href="#GlobalClasses.__init__-14"><span class="linenos">14</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
-</span><span id="GlobalClasses.__init__-15"><a href="#GlobalClasses.__init__-15"><span class="linenos">15</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
-</span><span id="GlobalClasses.__init__-16"><a href="#GlobalClasses.__init__-16"><span class="linenos">16</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
-</span><span id="GlobalClasses.__init__-17"><a href="#GlobalClasses.__init__-17"><span class="linenos">17</span></a>
-</span><span id="GlobalClasses.__init__-18"><a href="#GlobalClasses.__init__-18"><span class="linenos">18</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="GlobalClasses.__init__-19"><a href="#GlobalClasses.__init__-19"><span class="linenos">19</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
-</span><span id="GlobalClasses.__init__-20"><a href="#GlobalClasses.__init__-20"><span class="linenos">20</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="GlobalClasses.__init__-21"><a href="#GlobalClasses.__init__-21"><span class="linenos">21</span></a>
-</span><span id="GlobalClasses.__init__-22"><a href="#GlobalClasses.__init__-22"><span class="linenos">22</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.__init__-23"><a href="#GlobalClasses.__init__-23"><span class="linenos">23</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cc</span><span class="p">,</span> <span class="n">ss</span><span class="p">,</span> <span class="n">ch</span><span class="p">):</span>
+</span><span id="GlobalClasses.__init__-24"><a href="#GlobalClasses.__init__-24"><span class="linenos">24</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span>
+</span><span id="GlobalClasses.__init__-25"><a href="#GlobalClasses.__init__-25"><span class="linenos">25</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ss</span> <span class="o">=</span> <span class="n">ss</span>
+</span><span id="GlobalClasses.__init__-26"><a href="#GlobalClasses.__init__-26"><span class="linenos">26</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="n">ch</span>
 </span></pre></div>
 
 
@@ -242,14 +301,74 @@ GlobalClasses    </h1>
     
 
                             </div>
-                            <div id="GlobalClasses.useRandom" class="classattr">
+                            <div id="GlobalClasses.modelRendezvous" class="classattr">
                                 <div class="attr variable">
-            <span class="name">useRandom</span>        =
+            <span class="name">modelRendezvous</span>        =
+<span class="default_value">True</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.modelRendezvous"></a>
+    
+    
+
+                            </div>
+                            <div id="GlobalClasses.onlyChargeOnce" class="classattr">
+                                <div class="attr variable">
+            <span class="name">onlyChargeOnce</span>        =
+<span class="default_value">True</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.onlyChargeOnce"></a>
+    
+    
+
+                            </div>
+                            <div id="GlobalClasses.chargePrint" class="classattr">
+                                <div class="attr variable">
+            <span class="name">chargePrint</span>        =
 <span class="default_value">False</span>
 
         
     </div>
-    <a class="headerlink" href="#GlobalClasses.useRandom"></a>
+    <a class="headerlink" href="#GlobalClasses.chargePrint"></a>
+    
+    
+
+                            </div>
+                            <div id="GlobalClasses.chargeLog" class="classattr">
+                                <div class="attr variable">
+            <span class="name">chargeLog</span>        =
+<span class="default_value">None</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.chargeLog"></a>
+    
+    
+
+                            </div>
+                            <div id="GlobalClasses.dronePrint" class="classattr">
+                                <div class="attr variable">
+            <span class="name">dronePrint</span>        =
+<span class="default_value">False</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.dronePrint"></a>
+    
+    
+
+                            </div>
+                            <div id="GlobalClasses.droneLog" class="classattr">
+                                <div class="attr variable">
+            <span class="name">droneLog</span>        =
+<span class="default_value">None</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.droneLog"></a>
     
     
 
@@ -266,6 +385,18 @@ GlobalClasses    </h1>
     
 
                             </div>
+                            <div id="GlobalClasses.useRandom" class="classattr">
+                                <div class="attr variable">
+            <span class="name">useRandom</span>        =
+<span class="default_value">False</span>
+
+        
+    </div>
+    <a class="headerlink" href="#GlobalClasses.useRandom"></a>
+    
+    
+
+                            </div>
                             <div id="GlobalClasses.getDroneSpeed" class="classattr">
                                         <input id="GlobalClasses.getDroneSpeed-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
@@ -278,10 +409,10 @@ GlobalClasses    </h1>
 
     </div>
     <a class="headerlink" href="#GlobalClasses.getDroneSpeed"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.getDroneSpeed-24"><a href="#GlobalClasses.getDroneSpeed-24"><span class="linenos">24</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses.getDroneSpeed-25"><a href="#GlobalClasses.getDroneSpeed-25"><span class="linenos">25</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses.getDroneSpeed-26"><a href="#GlobalClasses.getDroneSpeed-26"><span class="linenos">26</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses.getDroneSpeed-27"><a href="#GlobalClasses.getDroneSpeed-27"><span class="linenos">27</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.getDroneSpeed-28"><a href="#GlobalClasses.getDroneSpeed-28"><span class="linenos">28</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses.getDroneSpeed-29"><a href="#GlobalClasses.getDroneSpeed-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">getDroneSpeed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses.getDroneSpeed-30"><a href="#GlobalClasses.getDroneSpeed-30"><span class="linenos">30</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;getter for droneKmPerHr&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses.getDroneSpeed-31"><a href="#GlobalClasses.getDroneSpeed-31"><span class="linenos">31</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span>
 </span></pre></div>
 
 
@@ -302,14 +433,52 @@ GlobalClasses    </h1>
 
     </div>
     <a class="headerlink" href="#GlobalClasses.getRandom"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.getRandom-29"><a href="#GlobalClasses.getRandom-29"><span class="linenos">29</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses.getRandom-30"><a href="#GlobalClasses.getRandom-30"><span class="linenos">30</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses.getRandom-31"><a href="#GlobalClasses.getRandom-31"><span class="linenos">31</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses.getRandom-32"><a href="#GlobalClasses.getRandom-32"><span class="linenos">32</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.getRandom-33"><a href="#GlobalClasses.getRandom-33"><span class="linenos">33</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses.getRandom-34"><a href="#GlobalClasses.getRandom-34"><span class="linenos">34</span></a>    <span class="k">def</span> <span class="nf">getRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses.getRandom-35"><a href="#GlobalClasses.getRandom-35"><span class="linenos">35</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;return a random no!&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses.getRandom-36"><a href="#GlobalClasses.getRandom-36"><span class="linenos">36</span></a>        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>return a random no</p>
+            <div class="docstring"><p>return a random no!</p>
+</div>
+
+
+                            </div>
+                            <div id="GlobalClasses.setGlobals" class="classattr">
+                                        <input id="GlobalClasses.setGlobals-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+                    <div class="decorator">@classmethod</div>
+
+        <span class="def">def</span>
+        <span class="name">setGlobals</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">cls</span>,</span><span class="param">	<span class="n">droneKmPerHr</span>,</span><span class="param">	<span class="n">randomSeed</span>,</span><span class="param">	<span class="n">droneLog</span>,</span><span class="param">	<span class="n">chargeLog</span>,</span><span class="param">	<span class="n">onlyChargeOnce</span>,</span><span class="param">	<span class="n">modelRendezvous</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="GlobalClasses.setGlobals-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#GlobalClasses.setGlobals"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.setGlobals-38"><a href="#GlobalClasses.setGlobals-38"><span class="linenos">38</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses.setGlobals-39"><a href="#GlobalClasses.setGlobals-39"><span class="linenos">39</span></a>    <span class="k">def</span> <span class="nf">setGlobals</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">droneKmPerHr</span><span class="p">,</span> <span class="n">randomSeed</span><span class="p">,</span> <span class="n">droneLog</span><span class="p">,</span> <span class="n">chargeLog</span><span class="p">,</span> <span class="n">onlyChargeOnce</span><span class="p">,</span> <span class="n">modelRendezvous</span><span class="p">):</span>
+</span><span id="GlobalClasses.setGlobals-40"><a href="#GlobalClasses.setGlobals-40"><span class="linenos">40</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;initialise globals used across drone,ev,controlcentre&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses.setGlobals-41"><a href="#GlobalClasses.setGlobals-41"><span class="linenos">41</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneKmPerHr</span> <span class="o">=</span> <span class="n">droneKmPerHr</span>
+</span><span id="GlobalClasses.setGlobals-42"><a href="#GlobalClasses.setGlobals-42"><span class="linenos">42</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">onlyChargeOnce</span> <span class="o">=</span> <span class="n">onlyChargeOnce</span>
+</span><span id="GlobalClasses.setGlobals-43"><a href="#GlobalClasses.setGlobals-43"><span class="linenos">43</span></a>        <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">modelRendezvous</span> <span class="o">=</span> <span class="n">modelRendezvous</span>
+</span><span id="GlobalClasses.setGlobals-44"><a href="#GlobalClasses.setGlobals-44"><span class="linenos">44</span></a>
+</span><span id="GlobalClasses.setGlobals-45"><a href="#GlobalClasses.setGlobals-45"><span class="linenos">45</span></a>        <span class="k">if</span> <span class="n">randomSeed</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="GlobalClasses.setGlobals-46"><a href="#GlobalClasses.setGlobals-46"><span class="linenos">46</span></a>            <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">randomSeed</span><span class="p">)</span>
+</span><span id="GlobalClasses.setGlobals-47"><a href="#GlobalClasses.setGlobals-47"><span class="linenos">47</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="GlobalClasses.setGlobals-48"><a href="#GlobalClasses.setGlobals-48"><span class="linenos">48</span></a>
+</span><span id="GlobalClasses.setGlobals-49"><a href="#GlobalClasses.setGlobals-49"><span class="linenos">49</span></a>        <span class="k">if</span> <span class="n">droneLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GlobalClasses.setGlobals-50"><a href="#GlobalClasses.setGlobals-50"><span class="linenos">50</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">droneLog</span> <span class="o">=</span> <span class="n">droneLog</span>
+</span><span id="GlobalClasses.setGlobals-51"><a href="#GlobalClasses.setGlobals-51"><span class="linenos">51</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">dronePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="GlobalClasses.setGlobals-52"><a href="#GlobalClasses.setGlobals-52"><span class="linenos">52</span></a>
+</span><span id="GlobalClasses.setGlobals-53"><a href="#GlobalClasses.setGlobals-53"><span class="linenos">53</span></a>        <span class="k">if</span> <span class="n">chargeLog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="GlobalClasses.setGlobals-54"><a href="#GlobalClasses.setGlobals-54"><span class="linenos">54</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargeLog</span> <span class="o">=</span> <span class="n">chargeLog</span>
+</span><span id="GlobalClasses.setGlobals-55"><a href="#GlobalClasses.setGlobals-55"><span class="linenos">55</span></a>            <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">chargePrint</span> <span class="o">=</span> <span class="kc">True</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>initialise globals used across drone,ev,controlcentre</p>
 </div>
 
 
@@ -326,10 +495,10 @@ GlobalClasses    </h1>
 
     </div>
     <a class="headerlink" href="#GlobalClasses.usingRandom"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.usingRandom-34"><a href="#GlobalClasses.usingRandom-34"><span class="linenos">34</span></a>    <span class="nd">@classmethod</span>
-</span><span id="GlobalClasses.usingRandom-35"><a href="#GlobalClasses.usingRandom-35"><span class="linenos">35</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-</span><span id="GlobalClasses.usingRandom-36"><a href="#GlobalClasses.usingRandom-36"><span class="linenos">36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
-</span><span id="GlobalClasses.usingRandom-37"><a href="#GlobalClasses.usingRandom-37"><span class="linenos">37</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="GlobalClasses.usingRandom-57"><a href="#GlobalClasses.usingRandom-57"><span class="linenos">57</span></a>    <span class="nd">@classmethod</span>
+</span><span id="GlobalClasses.usingRandom-58"><a href="#GlobalClasses.usingRandom-58"><span class="linenos">58</span></a>    <span class="k">def</span> <span class="nf">usingRandom</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+</span><span id="GlobalClasses.usingRandom-59"><a href="#GlobalClasses.usingRandom-59"><span class="linenos">59</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;returns True if we are using random nos, False otherwise&quot;&quot;&quot;</span>
+</span><span id="GlobalClasses.usingRandom-60"><a href="#GlobalClasses.usingRandom-60"><span class="linenos">60</span></a>        <span class="k">return</span> <span class="n">GlobalClasses</span><span class="o">.</span><span class="n">useRandom</span>
 </span></pre></div>
 
 

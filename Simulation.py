@@ -8,21 +8,21 @@ from EV import EV
 class Simulation:
     """Class executing the simulation loop - tracks the timeStep"""
     # Basic simulation parameters
-    modelRendezvous = True  # whether we estimate a rendezvous point for drone/ev
-    onlyChargeOnce = True   # whether we are allowed to charge EVs more than once in a simulation
     maxEVs = sys.maxsize    # default to no limit on the number of EVs we will shadow - does not impact the actual no of EVs in the simulation
     stepSecs = 1.0          # Real length modelled by each simulation step - we can only know this when the simulation starts
+
+    useChargeHubs = False   # whether we put drone charging output into charging station file - set true if the sumo options chargingstations-output is set
 
     timeStep = 0            # running count of simulation steps
     EVs = {}                # collection for the EVs we are managing
 
-    def __init__(self,sumoCmd,modelRendezvous,onlyChargeOnce,maxEVs):
+    def __init__(self, sumoCmd, maxEVs):
         traci.start(sumoCmd)  #  traceFile="./tracilog.txt")
         self.stepSecs = traci.simulation.getDeltaT()
         Drone.stepSecsAdjust(self.stepSecs)
-        Simulation.modelRendezvous = modelRendezvous
-        Simulation.onlyChargeOnce = onlyChargeOnce
         Simulation.maxEVs = maxEVs
+        if traci.simulation.getOption("chargingstations-output"):
+            Simulation.useChargeHubs = True
 
     def __del__(self):
         traci.close()
@@ -30,7 +30,7 @@ class Simulation:
 
     @classmethod
     def step(cls):
-        """Simulation step"""                  
+        """Simulation step"""
         if traci.simulation.getMinExpectedNumber() > 0:
             traci.executeMove()                     #  move vehicles first so we can move drones to the same position
             Simulation.timeStep += 1

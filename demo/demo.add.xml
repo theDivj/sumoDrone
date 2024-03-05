@@ -20,24 +20,24 @@
    
     <!-- StoppingPlaces -->
     <!-- cs on diagonal -->
-    <chargingStation id="cs_0" lane="A9A8_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_1" lane="B8B7_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_2" lane="C7C6_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_3" lane="D6D5_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_4" lane="E5E4_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_5" lane="F4F3_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_6" lane="G3G2_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_7" lane="H2H1_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_8" lane="I1I0_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_10" lane="A8A9_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_11" lane="B7B8_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_12" lane="C6C7_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_13" lane="D5D6_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_14" lane="E4E5_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_15" lane="F3F4_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_16" lane="G2G3_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_17" lane="H1H2_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
-    <chargingStation id="cs_18" lane="I0I1_0" startPos="0.00" endPos="10.00" friendlyPos="true"/>
+    <chargingStation id="cs_0" lane="A9A8_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_1" lane="B8B7_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_2" lane="C7C6_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_3" lane="D6D5_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_4" lane="E5E4_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_5" lane="F4F3_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_6" lane="G3G2_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_7" lane="H2H1_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_8" lane="I1I0_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_10" lane="A8A9_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_11" lane="B7B8_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_12" lane="C6C7_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_13" lane="D5D6_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_14" lane="E4E5_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_15" lane="F3F4_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_16" lane="G2G3_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_17" lane="H1H2_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
+    <chargingStation id="cs_18" lane="I0I1_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
     
     <!-- cs on square 
     <chargingStation id="cs_0" lane="C7C6_0" startPos="0" endPos="10"/>

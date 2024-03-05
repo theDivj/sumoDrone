@@ -46,6 +46,7 @@ class ChargeHubs:
             pos = traci.chargingstation.getStartPos(hub) + 5      # move inside the CS
             x, y = traci.simulation.convert2D(edge, pos)
             ChargeHubs.chargeHubLocations[hub] = x, y, edge, pos
+            traci.route.add(edge, [edge])                         # create a route comprising the edge where the hub resides - to allow add of dummyEVs for drone batteries
 
     @staticmethod
     def nearestHubLocation(pos):

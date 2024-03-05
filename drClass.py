@@ -11,14 +11,21 @@ from Simulation import Simulation
     sample traci code - using a POI to represent a drone able to fly outside the network and track specific vehicles
                             network needs charging stations to launch and recharge drones
    run as:
-      python drclass.py [-h] [-v] [-m] [-l] [-d n] [-b] [-e n] [-s sumo.exe] [-p metres] [-wu n.n] [-we n.n] [-o filePath] [-c filePath] [-r n] [-k n] sumocfg
+        python drclass.py [-h] [-v] [-b] [-c filePath] [-d n] [-e n] [-k n] [-l] [-m] [-o filePath] [-p metres] [-r n]
+                  [-s sumo.exe] [-t ehang184] [-we n.n] [-wu n.n]
+                  sumocfg
 
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = ' 3.0 1st March 2024'
+__version__ = '3.1 4th March 2024'
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
+#
+# v3.1 Honours the charge request - v3 charged upto thresholds - which would be the charge request plus that used before the drone arrived and whilst charging
+#        now the drone breaks off charging once it has delivered the requested charge.
+#      Added option supporting randomisation of the charge request - by default request is 2kWh - passing a random seed varies this and the start threshold by +/- 30%
+#      Added dummy EVs when Drone is at charging hub to represent the Drone batteries and record their charging period - only used when chargingstations-output is configured
 #
 
 
@@ -112,13 +119,13 @@ class drClass:
         drClass.sumoCmd = [sumoBinary, "-c", args.sumocfg]
 
         # create our management objects plus ChargeHubs - which is essentially static
-        ss = Simulation(drClass.sumoCmd, modelRendezvous, onlyChargeOnce, maxEVs)
+        ss = Simulation(drClass.sumoCmd, maxEVs)
         ch = ChargeHubs()
         cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones,args.droneType)
 
         # setup the global references to these objects
         gg = GG(cc, ss, ch)
-        gg.setGlobals(droneKmPerHr, randomSeed, droneLog, chargeLog)
+        gg.setGlobals(droneKmPerHr, randomSeed, droneLog, chargeLog, onlyChargeOnce, modelRendezvous)
 
         # any output file would have been opened in parse_args() - write out the title line if needed
         if gg.dronePrint:

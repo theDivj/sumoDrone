@@ -32,7 +32,7 @@ class ControlCentre:
         """Set up the mapping between drone and ev"""
         self.allocatedEV[ev] = drone
         self.allocatedDrone[drone] = ev
-        if GG.ss.modelRendezvous:
+        if GG.modelRendezvous:
             ev.allocate(drone, self.findRendezvousXY(ev, drone))
         else:
             ev.allocate(drone, None)
@@ -270,7 +270,7 @@ class ControlCentre:
         return neighbours, meanDist
 
     def notifyDroneState(self, drone):
-        """Notification from Drone when charging finished or Drone has broken off the charge"""
+        """Notification from Drone when charging finished or Drone has broken off the charge/flight"""
         if drone in self.allocatedDrone:
             del self.allocatedEV[self.allocatedDrone[drone]]
             del self.allocatedDrone[drone]
@@ -351,7 +351,7 @@ class ControlCentre:
             tmyChargeMeCount        += drone.myChargeMeCount
             tmyResidualFlyingKWh    += drone.myFlyingCharge
             tmyResidualChargeKWh    += drone.myCharge
-            if GG.ss.modelRendezvous:
+            if GG.modelRendezvous:
                 tmyChaseCount += drone.myChaseCount
                 tmyBrokenChaseCount += drone.myBrokenChaseCount
                 tmyChaseSteps += drone.myChaseSteps
@@ -366,7 +366,7 @@ class ControlCentre:
         tmyResidualFlyingKWh /= 1000.
         tmyResidualChargeKWh /= 1000.
 
-        if GG.ss.modelRendezvous:
+        if GG.modelRendezvous:
             # note chases + broken chases usually less than charge sessions total because some will break off before they get to rendezvous
             # ie chases are between rendezvous point and beginning charging - indicator of efficiency of rendezvous algorithm
             if tmyChaseCount > 0:
@@ -383,7 +383,7 @@ class ControlCentre:
                   "\tDistance\tFlyKWh\tchKWh\tFlyChgKWh\tChgKWh\trFlyKWh\trChKWh"
                   "\t# EVs\tEVChg\tEVgap\tFull\tbrDrone\tbrEV\tChases\tAvg Chase\tBrk Chase")
             print("{}\t{!r}\t{!r}\t{!r}\t{:.1f}\t{:.1f}\t{:.0f}\t{:.1f}".format
-                  (timeStamp, GG.ss.modelRendezvous, GG.ss.onlyChargeOnce,
+                  (timeStamp, GG.modelRendezvous, GG.onlyChargeOnce,
                    GG.dronePrint, self.wEnergy, self.wUrgency, self.proximityRadius, GG.ss.timeStep), end='')
             print("\t%i\t%.2f\t%.2f\t%.2f" % (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh), end="")
             print("\t{:.2f}\t{:.2f}\t{:.1f}\t{:.1f}".format
@@ -392,7 +392,7 @@ class ControlCentre:
                   (EV.evCount, EV.evChargeSteps * Drone.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)), end="")
             print("\t{:.0f}\t{:.0f}\t{:.0f}".format(tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges), end="")
 
-            if GG.ss.modelRendezvous:
+            if GG.modelRendezvous:
                 print("\t{}\t{:.0f}\t{}\t{}\t{}\t{}".format(tmyChaseCount, averageChase, tmyBrokenChaseCount, runstring, version, sumoVersion))
             else:
                 print("\t\t\t\t{}\t{}\t{}".format(runstring, version, sumoVersion))
@@ -401,7 +401,7 @@ class ControlCentre:
             print("\nSummary Statistics:\t\t", timeStamp)
             print("\tModel flags:\tRendezvous: {!r}\tCharge Once: {!r}\tDrone print: {!r}\n\tEnergy Weight: "
                   "{:.1f}\tUrgency Weight: {:.1f}\tProximity radius(m): {:.0f}\tTime steps: {:.1f}".format
-                  (GG.ss.modelRendezvous, GG.ss.onlyChargeOnce, GG.dronePrint, self.wEnergy,
+                  (GG.modelRendezvous, GG.onlyChargeOnce, GG.dronePrint, self.wEnergy,
                    self.wUrgency, self.proximityRadius, GG.ss.timeStep))
             print("\n\tDrone Totals:\t(%i drones)\n\t\tDistance Km:\t%.2f\n\t\tFlying KWh:\t%.2f\n\t\tCharging KWh:\t%.2f" %
                   (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh))
@@ -414,7 +414,7 @@ class ControlCentre:
             print("\t\tCharge Sessions:\n\t\t\tFull charges:\t{:.0f}\n\t\t\tPart (drone):\t{:.0f}\n\t\t\tPart (ev):\t{:.0f}".format
                   (tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges))
 
-            if GG.ss.modelRendezvous:
+            if GG.modelRendezvous:
                 print("\n\tSuccessful chases: %i\tAverage chase time: %.1fs\tbroken Chases: %i" %
                       (tmyChaseCount, averageChase, tmyBrokenChaseCount))
 

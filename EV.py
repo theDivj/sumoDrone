@@ -67,7 +67,7 @@ class EV:
         if oWh > 1:
            self.myevChargeRequestWh = oWh
         else:
-           self.myevChargeRequestWh = evChargeRequestWh
+           self.myevChargeRequestWh = EV.evChargeRequestWh
 
         if GG.usingRandom():
             variation = EV.pRandomVariation * self.myevChargeRequestWh

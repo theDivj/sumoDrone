@@ -96,6 +96,7 @@ class Drone:
         traci.vehicletype.setLength("Drone","0.1")
         traci.vehicletype.setMinGap("Drone","0.0")
         traci.vehicletype.setParameter("Drone", "has.battery.device", "True")
+        traci.vehicletype.setEmissionClass("Drone", "Energy/unknown");
         Drone.dummyEVCreated = True
 
     @classmethod
@@ -178,6 +179,7 @@ class Drone:
             traci.vehicle.add(dummyFB,e,"Drone")
             traci.vehicle.setParameter(dummyFB, "device.battery.maximumBatteryCapacity", Drone.droneFlyingWh)
             traci.vehicle.setParameter(dummyFB, "device.battery.actualBatteryCapacity", self.myFlyingCharge)
+            traci.vehicle.setEmissionClass(dummyFB, "Energy/unknown");
             traci.vehicle.moveTo(dummyFB,lane,p)
             traci.vehicle.setStop(dummyFB, e, pos=p, duration=10000.0, flags=1)
 
@@ -185,6 +187,7 @@ class Drone:
             traci.vehicle.add(dummyCB,e,"Drone")
             traci.vehicle.setParameter(dummyCB, "device.battery.maximumBatteryCapacity", Drone.droneChargeWh)
             traci.vehicle.setParameter(dummyCB, "device.battery.actualBatteryCapacity", self.myCharge)
+            traci.vehicle.setEmissionClass(dummyCB, "Energy/unknown");
             traci.vehicle.moveTo(dummyCB,lane,p + 0.5)
             traci.vehicle.setStop(dummyCB, e, pos=p + 0.5, duration=10000.0, flags=1)
             self.myDummyEVInserted = True
@@ -210,22 +213,24 @@ class Drone:
 
         ddy = py - dy
         ddx = px - dx
-        try:
-            dydx = ddy / ddx
-            x = abs(math.sqrt(self.droneStepM2 / (1.0 + dydx * dydx)))
-            y = abs(x * dydx)
-        except (ValueError, ZeroDivisionError):    # assume either x or y positions are equal
-            if dx == px:
-                if dy == py:
+        x = 0.
+        y = 0.
+        if ( ddx == 0 or ddy == 0 ): 
+            if (ddx == 0):
+                if (ddy == 0):
                     x = 0.
                     y = 0.
                 else:
                     x = 0.
                     y = abs(ddy)
-            else:   # assume dy = py
-                x = abs(ddx)
-                y = 0.
-
+            else: # ddy == 0
+                    x = abs(ddx)
+                    y = 0.0
+            
+        else:
+            x = abs(math.sqrt(self.droneStepM2 / (1.0 + pow(ddy/ddx ,2))))
+            y = abs(x * ddy/ddx)
+ 
         if abs(ddx) <= x:  # will reach px in this step so set to ~exact distance
            x = px + 0.001
         elif ddx > 0:
@@ -261,12 +266,12 @@ class Drone:
         if self.myEV is not None:
             evID = self.myEV.getID()
             lane = traci.vehicle.getLaneID(evID)
-            lanePos = traci.vehicle.getLanePosition(evID)
+            lanePos = float(traci.vehicle.getLanePosition(evID))
         else:
             evID = ""
             lane = ""
-            lanePos = ""
-        print("{:.1f}\t{}\t{}\t{}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format
+            lanePos = 0
+        print("{:.1f}\t{}\t{}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format
               (GG.ss.timeStep, self.myID, evID, lane, lanePos, x, y, self.myChargingWh, self.myCharge, self.myFlyingCharge, activity), file=GG.droneLog)
 
     def notifyChase(self, chaseOK, chaseSteps):

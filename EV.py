@@ -54,13 +54,26 @@ class EV:
         self.myCapacity = EV.chargeDoneThreshold    # we only shadow this when charging (state EV.EVState.CHARGINGFROMDRONE)
 
         self.myChargeNeededThreshold = EV.chargeNeededThreshold
-        self.myevChargeRequestWh = EV.evChargeRequestWh
+
+        # check to see if we have an override defined for charge request - could be in type or vehicle definition - vehicle takes precedence
+        vType = traci.vehicle.getTypeID(self.myID) 
+        overrideChargeWh = traci.vehicletype.getParameter(vType,"chargeRequestWh")
+        vehicleOverrideChargeWh = traci.vehicle.getParameter(self.myID, "chargeRequestWh")
+        oWh = 0;
+        if len(overrideChargeWh) > 1:
+           oWh = float(overrideChargeWh)
+        if len(vehicleOverrideChargeWh) > 1:
+           oWh = float(vehicleOverrideChargeWh);
+        if oWh > 1:
+           self.myevChargeRequestWh = oWh
+        else:
+           self.myevChargeRequestWh = evChargeRequestWh
 
         if GG.usingRandom():
-            variation = EV.pRandomVariation * EV.evChargeRequestWh
+            variation = EV.pRandomVariation * self.myevChargeRequestWh
             variation = int(GG.getRandom() * 2 * variation - variation)
             self.myChargeNeededThreshold = EV.chargeNeededThreshold + variation + int(1000 * GG.getRandom()) - 500
-            self.myevChargeRequestWh = EV.evChargeRequestWh + variation
+            self.myevChargeRequestWh += variation
 
         # We want to support ev requesting enough charge to get to destination
         # or to a charge point - meaning that a charge request will have a varying amount
@@ -68,7 +81,7 @@ class EV:
         #    (setLastChargeRequest implementation needs extension to calculate specific charge needed)
         # Drone is now responsible for stopping charging after delivering requested amount
         self.myChargeDone = EV.chargeDoneThreshold
-        self.myLastChargeRequest = EV.evChargeRequestWh  # default
+        self.myLastChargeRequest = self.myevChargeRequestWh  # default
         EV.evCount += 1
 
     def __del__(self):

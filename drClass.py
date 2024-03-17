@@ -18,7 +18,7 @@ from Simulation import Simulation
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.1 4th March 2024'
+__version__ = '3.2 17th March 2024'
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -27,7 +27,8 @@ __version__ = '3.1 4th March 2024'
 #      Added option supporting randomisation of the charge request - by default request is 2kWh - passing a random seed varies this and the start threshold by +/- 30%
 #      Added dummy EVs when Drone is at charging hub to represent the Drone batteries and record their charging period - only used when chargingstations-output is configured
 #
-
+# v3.2 Added override to default charge request  - parameter chargeRequestWh (for vehicle or vehicleType). Handled collisions when "hiding" dummy EV's
+#
 
 class drClass:
     """Wrapper class to setup and execute simulation"""

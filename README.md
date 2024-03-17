@@ -1,5 +1,7 @@
 # Using sumo POIs to represent 'Drones' for charging EVs
->  (Traci scripts for any SUMO model using charging stations and EVs.)      cf <https://github.com/eclipse-sumo/sumo>                                    
+>  (Traci scripts for any SUMO model using charging stations and EVs.)      cf <https://github.com/eclipse-sumo/sumo>
+
+>   a faster, C++ version of this code, using libsumo, is available as SumoDrone-Cpp                                    
 ---
   Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model
   they then get charged by the nearest drone, that is not busy, after which the drone will return to the nearest charge hub - or another vehicle if required  
@@ -16,3 +18,9 @@
   In sumo-gui, vehicles and drones turn red when they need charging and green when they are actually charging.
   
     (These scripts were created as a test of the feasibility of using POIs to model movements outside the sumo road network.)
+
+  
+---
+  > Note that the charge "requested" by the ev defaults to 2kW. This can be modified by use of a vehicle or vehicleType parameter:  chargeRequestWh
+        eg \<param key="chargeRequestWh" value="10000"/\>   would set a charge request size of 10kW.  In all cases use of the -r option varies the request by +/- 30%
+---

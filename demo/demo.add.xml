@@ -16,6 +16,7 @@
         <param key="rollDragCoefficient" value="0.01"/>      <!-- as above -->
         <param key="stoppingThreshold" value="0.1"/>         <!-- as above -->
         <param key="vehicleMass" value="1830"/>              <!-- 1682kg curb wt + average 2 passengers / bags -->
+        <param key="chargeRequestWh" value="2000"/>          <!-- new (optional) parameter to set the size of the charge request by this vehicle type -->
     </vType>
    
     <!-- StoppingPlaces -->

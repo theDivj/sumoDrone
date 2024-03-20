@@ -17,7 +17,11 @@ class Simulation:
     EVs = {}                # collection for the EVs we are managing
 
     def __init__(self, sumoCmd, maxEVs):
-        traci.start(sumoCmd)  #  traceFile="./tracilog.txt")
+        try:
+            traci.start(sumoCmd)  #  traceFile="./tracilog.txt")
+        except:
+            print("Could not start: ", sumoCmd)
+            exit(1)
         self.stepSecs = traci.simulation.getDeltaT()
         Drone.stepSecsAdjust(self.stepSecs)
         Simulation.maxEVs = maxEVs

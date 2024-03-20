@@ -29,8 +29,12 @@ class Drone:
     droneFlyingWhperTimeStep = droneFlyingWh / (23 * 60.)   # power usage based on Ehang 184 which has battery capacity of 14.4 KW giving 23 mins flight time
     droneChargeContingencyp = 0.05    # minimum contingency level %
     droneChargeViablep = 0.3          # minimum viable level %
-    WhEVChargeRatePerTimeStep = 25000. / 3600       # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
-    WhDroneRechargePerTimeStep = 75000. / 3600      # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+    WhEVChargeRatePerTimeStep = 25000 / 3600.       # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+    WhDroneRechargePerTimeStep = 75000 / 3600.      # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+    droneImageFile = "drone.png"
+    droneColour = (0, 0, 255, 255)
+    droneWidth = 10.0
+    droneHeight = 10.0
 
     # Derived class variables
     droneMperSec = droneKMperh / 3.6
@@ -41,11 +45,13 @@ class Drone:
     viableDroneCharge = droneChargeViablep      * droneChargeWh     # thresholds to allow allocation - ie enough charge to be useful
     viableDroneFlyingWh = droneChargeViablep    * droneFlyingWh
 
+    droneTypeSet = False            # flag to say we've set drone type
     dummyEVCreated = False          # safety flag - in case we call dummyEVHide twice
 
     def __init__(self, pos, droneType="ehang184"):
         Drone.droneIDCount += 1
-        Drone.setDroneType(droneType)
+        if not Drone.droneTypeSet:
+            Drone.setDroneType(droneType)
         self.myID = "d" + str(Drone.droneIDCount)
         self.myPosition = pos
         self.myParkPosition = self.myPosition
@@ -55,7 +61,8 @@ class Drone:
         self.myViableCharge = True
         self.myState = Drone.DroneState.NULL
         self.myEV = None
-
+        self.myColour = Drone.droneColour
+        
         # reset drone speed factors with any runstring override
         Drone.droneKMperh = GG.getDroneSpeed()
         Drone.droneMperSec = Drone.droneKMperh / 3.6
@@ -78,7 +85,30 @@ class Drone:
         self.myRequestedCharge = 0         # the amount of charge requested by the EV
         self.myDummyEVInserted = False     # whether the dummy EVs have been inserted
         # finally create the POI representing our drone
-        traci.poi.add(self.myID, pos[0], pos[1], color=(0, 0, 255, 255), layer=250, imgFile="drone.png", width=10, height=10)
+        traci.poi.add(self.myID, pos[0], pos[1], color=self.myColour, layer=250, imgFile=Drone.droneImageFile, width=Drone.droneWidth, height=Drone.droneHeight)
+        #self.printDroneType()
+        
+    def printDroneType(self):
+        print("droneKMperh:\t", Drone.droneKMperh)
+        print("droneChargeWh:\t", Drone.droneChargeWh)
+        print("droneFlyingWh:\t", Drone.droneFlyingWh)
+        print("droneFlyingWhperTimeStep:\t", Drone.droneFlyingWhperTimeStep)
+        print("droneChargeContingencyp:\t", Drone.droneChargeContingencyp)
+        print("droneChargeViablep:\t", Drone.droneChargeViablep)
+        print("WhEVChargeRatePerTimeStep:\t", Drone.WhEVChargeRatePerTimeStep)
+        print("WhDroneRechargePerTimeStep:\t", Drone.WhDroneRechargePerTimeStep)
+        print("droneImageFile:\t", Drone.droneImageFile)
+        print("droneColour:\t", Drone.droneColour)
+        print("droneWidth:\t", Drone.droneWidth)
+        print("droneHeight:\t", Drone.droneHeight)
+        print("droneMperSec:\t", Drone.droneMperSec)
+        print("droneStepMperTimeStep:\t", Drone.droneStepMperTimeStep)
+        print("droneStepM2:\t", Drone.droneStepM2)
+        print("minDroneCharge:\t", Drone.minDroneCharge)
+        print("minDroneFlyingWh:\t", Drone.minDroneFlyingWh)
+        print("viableDroneCharge:\t", Drone.viableDroneCharge)
+        print("viableDroneFlyingWh:\t", Drone.viableDroneFlyingWh, "\n")
+
 
     def __lt__(self, other):
         return int(self.myID[1:]) < int(other.myID[1:])
@@ -104,26 +134,28 @@ class Drone:
         """Support different drone definitions - initially to give us a drone that doesn't need charging"""
 
         Drone.droneKMperh = GG.getDroneSpeed()  # get speed override if any
+        
+        if not Drone.setDroneTypeFromPOI():
+            # EV charging battery size is constrained by drone carrying capacity * average battery energy density (currently ~150Wh/Kg)
+            match droneType:
+                case "ehang184":
+                    Drone.droneChargeWh = 30000.                      # capacity of battery used to charge ev's, based on Ehang 184 load capacity - 200Kg
+                    Drone.droneFlyingWh = 14400.                      # capacity of battery used to power drone
+                    Drone.droneFlyingWhperTimeStep = Drone.droneFlyingWh / (23 * 60.)   # Ehang 184 has battery capacity of 14.4 KW giving 23 mins flight time
+         
+                    Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
+                    Drone.droneChargeViablep = 0.3                    # minimum viable level %
+                    Drone.WhEVChargeRatePerTimeStep = 25000 / 3600.   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+                    Drone.WhDroneRechargePerTimeStep = 75000 / 3600.  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
 
-        # EV charging battery size is constrained by drone carrying capacity * average battery energy density (currently ~150Wh/Kg)
-        match droneType:
-            case "ehang184":
-                Drone.droneChargeWh = 30000.                      # capacity of battery used to charge ev's, based on Ehang 184 load capacity - 200Kg
-                Drone.droneFlyingWh = 14400.                      # capacity of battery used to power drone
-                Drone.droneFlyingWhperTimeStep = Drone.droneFlyingWh / (23 * 60.)   # Ehang 184 has battery capacity of 14.4 KW giving 23 mins flight time
-                Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
-                Drone.droneChargeViablep = 0.3                    # minimum viable level %
-                Drone.WhEVChargeRatePerTimeStep = 25000. / 3600   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
-                Drone.WhDroneRechargePerTimeStep = 75000. / 3600  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
-
-            case "ehang184x":            # ehang 184 with artificially increased battery sizes so they don't need recharging
-                Drone.droneChargeWh = 3000000.     # 100 * actual
-                Drone.droneFlyingWh = 14400000.
-                Drone.droneFlyingWhperTimeStep = 14400 / (23 * 60.)
-                Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
-                Drone.droneChargeViablep = 0.3                    # minimum viable level %
-                Drone.WhEVChargeRatePerTimeStep = 25000. / 3600   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
-                Drone.WhDroneRechargePerTimeStep = 75000. / 3600  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+                case "ehang184x":            # ehang 184 with artificially increased battery sizes so they don't need recharging
+                    Drone.droneChargeWh = 3000000.     # 100 * actual
+                    Drone.droneFlyingWh = 14400000.
+                    Drone.droneFlyingWhperTimeStep = 14400 / (23 * 60.)
+                    Drone.droneChargeContingencyp = 0.05              # minimum contingency level %
+                    Drone.droneChargeViablep = 0.3                    # minimum viable level %
+                    Drone.WhEVChargeRatePerTimeStep = 25000 / 3600.   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
+                    Drone.WhDroneRechargePerTimeStep = 75000 / 3600.  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
 
         Drone.droneMperSec = Drone.droneKMperh / 3.6
         Drone.droneStepMperTimeStep = Drone.droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
@@ -133,6 +165,52 @@ class Drone:
         Drone.viableDroneCharge = Drone.droneChargeViablep      * Drone.droneChargeWh     # thresholds to allow allocation - ie enough charge to be useful
         Drone.viableDroneFlyingWh = Drone.droneChargeViablep    * Drone.droneFlyingWh
 
+        Drone.stepSecsAdjust(GG.ss.stepSecs)
+        Drone.droneTypeSet = True;
+
+    @classmethod
+    def setDroneTypeFromPOI(cls):
+        POIlist = traci.poi.getIDList();
+        if len(POIlist) > 0:
+            for poi in POIlist:
+                if poi == "d0":
+                    dWidth = traci.poi.getWidth(poi)
+                    if dWidth > 0: Drone.droneWidth = dWidth
+                    dHeight = traci.poi.getHeight(poi)
+                    if dHeight > 0: Drone.droneHeight = dHeight
+                    dColor = traci.poi.getColor(poi)
+                    if len(dColor) > 1: Drone.droneColour = dColor
+                    dImageFile = traci.poi.getImageFile(poi)
+                    if len(dImageFile) > 1: Drone.droneImageFile = dImageFile
+
+                    dDroneKMperh = traci.poi.getParameter(poi, "droneKMperh")
+                    if len(dDroneKMperh) > 1: Drone.droneKMperh = float(dDroneKMperh)
+
+                    dDroneChargeWh = traci.poi.getParameter(poi, "droneChargeWh")
+                    if len(dDroneChargeWh) > 1: Drone.droneChargeWh = float(dDroneChargeWh)
+
+                    dDroneFlyingWh = traci.poi.getParameter(poi, "droneFlyingWh")
+                    if len(dDroneFlyingWh) > 1: Drone.droneFlyingWh = float(dDroneFlyingWh)
+
+                    dDroneFlyingMinutes = traci.poi.getParameter(poi, "droneFlyingMinutes")
+                    if len(dDroneFlyingMinutes) > 1: Drone.droneFlyingWhperTimeStep = Drone.droneFlyingWh /(60. * int(dDroneFlyingMinutes))
+
+                    dDroneChargeContingencyp = traci.poi.getParameter(poi, "droneChargeContingencyp")
+                    if len(dDroneChargeContingencyp) > 1: Drone.droneChargeContingencyp = float(dDroneChargeContingencyp)
+
+                    dDroneChargeViablep = traci.poi.getParameter(poi, "droneChargeViablep")
+                    if len(dDroneChargeViablep) > 1: Drone.droneChargeViablep = float(dDroneChargeViablep)
+
+                    dWhEVChargeRate = traci.poi.getParameter(poi, "WhEVChargeRate")
+                    if len(dWhEVChargeRate) > 1: Drone.WhEVChargeRatePerTimeStep = int(dWhEVChargeRate)/3600.
+
+                    dWhDroneRechargeRate = traci.poi.getParameter(poi, "WhDroneRechargeRate")
+                    if len(dWhDroneRechargeRate) > 1: Drone.WhDroneRechargePerTimeStep = int(dWhDroneRechargeRate)/3600.
+
+                    traci.poi.remove(poi)
+                    return True
+        return False
+    
     @classmethod
     def stepSecsAdjust(cls, stepSecs):
         """ adjust timestep class variables for the actual timestep = no change when timeStep = 1sec"""
@@ -337,7 +415,7 @@ class Drone:
             if not self.myViableCharge:
                 self.myViableCharge = True
                 GG.cc.notifyDroneState(self)  # cc only interested when we become viable
-                traci.poi.setColor(self.myID, (0, 0, 255, 255))
+                traci.poi.setColor(self.myID, self.myColour)
         else:
             self.myViableCharge = False
 

@@ -70,13 +70,13 @@ class drClass:
         parser.add_argument('sumocfg', help='sumo configuration file')            # mandatory - sumo configuration
 
         parser.add_argument('-b', '--brief', help='output a single line statistics summary, default full summary', action='store_const', default='False')
-        parser.add_argument('-c', '--chargeFile', help='file for output of detailed EV charge levels beginning/end of charge, default no output', metavar='filePath', type=argparse.FileType('x'))
+        parser.add_argument('-c', '--chargeFile', help='file for output of detailed EV charge levels beginning/end of charge, default no output', metavar='filePath', type=argparse.FileType('a'))
         parser.add_argument('-d', '--maxDrones', help='maximum drones to spawn, default is 6', metavar='n', type=int, default=6)
         parser.add_argument('-e', '--maxEVs', help='maximum EVs that are allowed to charge by Drone, default is no limit', metavar='n', type=int, default=sys.maxsize)
         parser.add_argument('-k', '--droneKmPerHr', help='drone speed Km/h', metavar='n', type=float, default=60.0)
         parser.add_argument('-l', '--lineOfSight', help='route drone to EV by line of sight at each step, default is to compute a rendezvous point\n', action='store_const', default='True')
         parser.add_argument('-m', '--multipleCharge', help='Allow EVs to be charged more than once - default is only once', action='store_const', default='True')
-        parser.add_argument('-o', '--outputFile', help='file for output of detailed drone charge levels for each step, default no output', metavar='filePath', type=argparse.FileType('x'))
+        parser.add_argument('-o', '--outputFile', help='file for output of detailed drone charge levels for each step, default no output', metavar='filePath', type=argparse.FileType('a'))
         parser.add_argument('-p', '--proximityRadius', help='proximity radius to scan for vehicles needing charge, default 1000', metavar='metres', type=float, default=1000)
         parser.add_argument('-r', '--randomSeed', help='seed for random generator triggering requests and sizeof requests', metavar='n', type=int, default=0)
         parser.add_argument('-s', '--sumoBinary', help='sumo binary to execute against configuration, default is sumo-gui.exe', metavar='sumo.exe', default="sumo-gui.exe")

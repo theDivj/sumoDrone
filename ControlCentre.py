@@ -197,13 +197,12 @@ class ControlCentre:
         evSpeed = 0.9 * traci.vehicle.getAllowedSpeed(evID)
 
         # work out how long it takes drone to fly to ev
-        posEV = ev.myPosition
-        posDrone = drone.myPosition
+        posEV = ev.getMyPosition()
+        posDrone = drone.getMyPosition()
         distanceToEV = math.dist(posDrone, posEV)
         crowFlies = distanceToEV/Drone.droneMperSec
         # how far vehicle can travel in same time
         evCrowFlies = evSpeed * crowFlies
-
         # where on the road that distance is
         vEdge, vPos, valid = self.findEdgePos(evID, evCrowFlies)
         if valid:
@@ -232,7 +231,6 @@ class ControlCentre:
                 # Algorithm debug lines - show rendezvous point
                 # pid = ev + " " + str(timeStep)
                 # traci.poi.add(pid, posRV[0], posRV[1], color=(255, 0, 255), layer=250, imgFile=".\\PNG132.bmp", width=5, height=5)
-
             return posRV   # this falls back to the original crow flies when straight line intercept fails
 
         # print(timeStep, ev, drone, evCrowFlies, "fail 2")  'fail' usually because vehicle has left simulation
@@ -337,15 +335,15 @@ class ControlCentre:
         tmyChaseCount = 0            # no of successful chases  (ie successfully got from rendezvous to EV)
         tmyBrokenChaseCount = 0      # no of broken chases  (vehicle left after rendezvous but before drone got there)
         tmyChaseSteps = 0            # steps for succesful chases - used to compute average chase time
-        # print("lenfree", len(self.freeDrones | self.needChargeDrones | set(self.allocatedDrone)))
-        # print("lenset", len(set(self.freeDrones | self.needChargeDrones | set(self.allocatedDrone))))
 
         for drone in self.freeDrones | self.needChargeDrones | set(self.allocatedDrone):
             tmyFlyingCount          += drone.myFlyingCount
-            tmyFullCharges          += drone.myFullCharges
+            tmyFlyingKWh            += drone.myFlyingCount * drone.droneFlyingWhperTimeStep
+
+            tmyFullCharges          += drone.myFullCharges            
             tmyBrokenCharges        += drone.myBrokenCharges
             tmyBrokenEVCharges      += drone.myBrokenEVCharges
-            tmyFlyingKWh            += drone.myFlyingWh
+
             tmyChargingKWh          += drone.myChargingWh
             tmyChargeMeFlyingCount  += drone.myChargeMeFlyingCount
             tmyChargeMeCount        += drone.myChargeMeCount

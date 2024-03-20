@@ -71,8 +71,8 @@ class EV:
 
         if GG.usingRandom():
             variation = EV.pRandomVariation * self.myevChargeRequestWh
-            variation = int(GG.getRandom() * 2 * variation - variation)
-            self.myChargeNeededThreshold = EV.chargeNeededThreshold + variation + int(1000 * GG.getRandom()) - 500
+            variation *= ((2. * GG.getRandom()) - 1.);
+            self.myChargeNeededThreshold = EV.chargeNeededThreshold + variation + (1000. * GG.getRandom()) - 500
             self.myevChargeRequestWh += variation
 
         # We want to support ev requesting enough charge to get to destination

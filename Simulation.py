@@ -2,7 +2,6 @@
 import sys
 import traci
 from GlobalClasses import GlobalClasses as GG
-from Drone import Drone
 from EV import EV
 
 class Simulation:
@@ -16,14 +15,17 @@ class Simulation:
     timeStep = 0            # running count of simulation steps
     EVs = {}                # collection for the EVs we are managing
 
-    def __init__(self, sumoCmd, maxEVs):
+    poiDrones = 0
+
+    def __init__(self, sumoCmd, maxEVs):   # cpp version passes maxdrones by ref
         try:
-            traci.start(sumoCmd)  #  traceFile="./tracilog.txt")
-        except:
-            print("Could not start: ", sumoCmd)
-            exit(1)
+            traci.start(sumoCmd)  #   default port, retres traceFile="./tracilog.txt")
+        except traci.TraCIException:
+            print("Could not start: ",sumoCmd, " - ",traci.TraCIException)
+            sys.exit(1)
+
         self.stepSecs = traci.simulation.getDeltaT()
-        Drone.stepSecsAdjust(self.stepSecs)
+
         Simulation.maxEVs = maxEVs
         if traci.simulation.getOption("chargingstations-output"):
             Simulation.useChargeHubs = True
@@ -60,3 +62,6 @@ class Simulation:
 
             return True
         return False
+
+    def setMaxEvs(self, pmaxEVs):
+        Simulation.maxEVs = pmaxEVs

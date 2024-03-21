@@ -19,7 +19,7 @@
         <param key="chargeRequestWh" value="2000"/>          <!-- new (optional) parameter to set the size of the charge request by this vehicle type -->
     </vType>
 
-    <poi id="d0" type="drone" color="0,0,255" layer="250" lane="A9A8_0" pos="5" >
+    <poi id="d0" type="drone" color="0,0,255" layer="250" lane="A9A8_0" imgFile='drone.png' height="10" width="10" pos="5" >
 		<param key="droneKMperh" value= "60.0"/>
 		<param key="droneChargeWh" value= "30000.0"/>
 		<param key="droneFlyingWh" value= "14400.0"/>
@@ -29,9 +29,9 @@
 		<param key="WhEVChargeRate" value= "25000"/>
 		<param key="WhDroneRechargeRate" value= "75000"/>
     </poi>
-    <poi id="d91" type="drone" color="0,250,250" layer="250" lane="E4E5_0" pos="5" />
-    <poi id="d92" type="drone" color="250,250,0" layer="250" lane="C7C6_0" pos="5" />
-    <poi id="d93" type="drone" color="250,250,250" layer="250" lane="D5D6_0" pos="5" />
+    <poi id="d91" type="drone" color="0,250,250"  layer="250" lane="E4E5_0" pos="6" />
+    <poi id="d92" type="drone" color="250,250,0" layer="250" lane="C7C6_0" pos="7" />
+    <poi id="d93" type="drone" color="250,250,250" layer="250" lane="D5D6_0" pos="8" />
     <!-- StoppingPlaces -->
     <!-- cs on diagonal -->
     <chargingStation id="cs_0" lane="A9A8_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>

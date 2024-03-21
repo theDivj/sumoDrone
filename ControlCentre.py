@@ -54,7 +54,7 @@ class ControlCentre:
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
                 evPos = ev.getMyPosition()
                 (x, y, e, p), hubDistance = GG.ch.nearestHubLocation(evPos)
-                drone = Drone((x, y), self.droneType)
+                drone = Drone((x, y), "", None)
                 self.spawnedDrones += 1
                 self.allocate(drone, ev)
                 nd -= 1
@@ -77,7 +77,7 @@ class ControlCentre:
                     self.freeDrones.remove(nearestDrone)
                 elif nd > 0:
                     (x, y, e, p), hubDistance = GG.ch.nearestHubLocation(evPos)
-                    drone = Drone((x, y), self.droneType)
+                    drone = Drone((x, y),"", None)
                     self.spawnedDrones += 1
                     self.allocate(drone, ev)
                     nd -= 1
@@ -88,7 +88,7 @@ class ControlCentre:
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
                 evPos = ev.getMyPosition()
                 (x, y, e, p), hubDistance = GG.ch.nearestHubLocation(evPos)
-                drone = Drone((x, y), self.droneType)
+                drone = Drone((x, y), "", None)
                 self.spawnedDrones += 1
                 self.allocate(drone, ev)
                 nd -= 1
@@ -200,7 +200,7 @@ class ControlCentre:
         posEV = ev.getMyPosition()
         posDrone = drone.getMyPosition()
         distanceToEV = math.dist(posDrone, posEV)
-        crowFlies = distanceToEV/Drone.droneMperSec
+        crowFlies = distanceToEV/drone.myDt.droneMperSec
         # how far vehicle can travel in same time
         evCrowFlies = evSpeed * crowFlies
         # where on the road that distance is
@@ -211,7 +211,7 @@ class ControlCentre:
             evV = (posRV[0] - posEV[0])/crowFlies, (posRV[1] - posEV[1])/crowFlies
 
             vectorFromEV = posDrone[0] - posEV[0], posDrone[1] - posEV[1]
-            a = Drone.droneMperSec * Drone.droneMperSec - evSpeed * evSpeed
+            a = pow(drone.myDt.droneMperSec,2) - pow(evSpeed,2)
             b = 2 * (vectorFromEV[0]*evV[0] + vectorFromEV[1] * evV[1])
             c = -distanceToEV * distanceToEV
             bb4ac = (b * b) - (4 * a * c)
@@ -279,13 +279,13 @@ class ControlCentre:
         else:
             self.needChargeDrones.add(drone)
 
-    def notifyEVState(self, ev, evState, droneID, capacity):
+    def notifyEVState(self, ev, evState, drone, capacity):
         """Notification from EV - when EV has left simulation (or completed charge)"""
         charge = 0.0
         match evState:
             case EV.EVState.DRIVING:            # means charge complete  so calculate charge
                 if ev.getID() in self.startChargeEV:
-                    charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * Drone.WhEVChargeRatePerTimeStep
+                    charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * drone.myDt.WhEVChargeRatePerTimeStep
                     del self.startChargeEV[ev.getID()]
 
             case EV.EVState.CHARGEREQUESTED:    # just log request
@@ -293,7 +293,7 @@ class ControlCentre:
 
             case EV.EVState.CHARGEBROKENOFF:    # drone broke off charge so should have an entry in self.startChargeEV
                 if ev.getID() in self.startChargeEV:
-                    charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * Drone.WhEVChargeRatePerTimeStep
+                    charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * drone.myDt.WhEVChargeRatePerTimeStep
                     del self.startChargeEV[ev.getID()]
 
             case EV.EVState.CHARGINGFROMDRONE:      # charge started
@@ -302,8 +302,10 @@ class ControlCentre:
             case EV.EVState.LEFTSIMULATION:
                 if ev.getID() in self.startChargeEV:
                     if self.startChargeEV[ev.getID()] > 0:
-                        charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * Drone.WhEVChargeRatePerTimeStep
-
+                        if drone is not None:
+                            charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * drone.myDt.WhEVChargeRatePerTimeStep
+                        else:
+                            charge = (GG.ss.timeStep - self.startChargeEV[ev.getID()]) * Drone.d0Type.WhEVChargeRatePerTimeStep
                 if ev in self.requests:
                     del self.requests[ev]
                 elif ev in self.allocatedEV:
@@ -317,6 +319,10 @@ class ControlCentre:
                 print(GG.ss.timeStep, "wd")
 
         if GG.chargePrint:
+            droneID = "-"
+            if drone != None:
+                droneID = drone.getID()
+            
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), evState, droneID, capacity, charge), file=GG.chargeLog)
 
     def printDroneStatistics(self, brief, version):
@@ -336,17 +342,26 @@ class ControlCentre:
         tmyBrokenChaseCount = 0      # no of broken chases  (vehicle left after rendezvous but before drone got there)
         tmyChaseSteps = 0            # steps for succesful chases - used to compute average chase time
 
+        tDroneDistance = 0.0
+        tmyChargeMeFlyingKWh = 0.0
+        tmyChargeMeKWh = 0.0
+
         for drone in self.freeDrones | self.needChargeDrones | set(self.allocatedDrone):
             tmyFlyingCount          += drone.myFlyingCount
-            tmyFlyingKWh            += drone.myFlyingCount * drone.droneFlyingWhperTimeStep
+            tmyFlyingKWh            += drone.myFlyingCount * drone.myDt.droneFlyingWhperTimeStep
 
-            tmyFullCharges          += drone.myFullCharges            
+            tDroneDistance          += drone.myFlyingCount * drone.myDt.droneStepMperTimeStep
+
+            tmyFullCharges          += drone.myFullCharges
             tmyBrokenCharges        += drone.myBrokenCharges
             tmyBrokenEVCharges      += drone.myBrokenEVCharges
 
-            tmyChargingKWh          += drone.myChargingWh
+            tmyChargingKWh          += drone.myEVChargingCount * drone.myDt.WhEVChargeRatePerTimeStep
             tmyChargeMeFlyingCount  += drone.myChargeMeFlyingCount
+            tmyChargeMeFlyingKWh    += drone.myChargeMeFlyingCount * drone.myDt.WhDroneRechargePerTimeStep
             tmyChargeMeCount        += drone.myChargeMeCount
+            tmyChargeMeKWh          += drone.myChargeMeCount * drone.myDt.WhDroneRechargePerTimeStep
+
             tmyResidualFlyingKWh    += drone.myFlyingCharge
             tmyResidualChargeKWh    += drone.myCharge
             if GG.modelRendezvous:
@@ -354,15 +369,15 @@ class ControlCentre:
                 tmyBrokenChaseCount += drone.myBrokenChaseCount
                 tmyChaseSteps += drone.myChaseSteps
 
-        tDroneDistance = tmyFlyingCount * Drone.droneStepMperTimeStep/1000.
         # alternative computation - avoiding errors from addition of large no of floating point
         # tmyFlyingKWh = tmyFlyingCount * Drone.droneFlyingWhperTimeStep / 1000.
+        tDroneDistance        /= 1000.
         tmyFlyingKWh          /= 1000.
         tmyChargingKWh        /= 1000.
-        tmyChargeMeFlyingKWh = tmyChargeMeFlyingCount * Drone.WhDroneRechargePerTimeStep/1000.
-        tmyChargeMeKWh        = tmyChargeMeCount * Drone.WhDroneRechargePerTimeStep/1000.
-        tmyResidualFlyingKWh /= 1000.
-        tmyResidualChargeKWh /= 1000.
+        tmyChargeMeFlyingKWh  /= 1000.
+        tmyChargeMeKWh        /= 1000.
+        tmyResidualFlyingKWh  /= 1000.
+        tmyResidualChargeKWh  /= 1000.
 
         if GG.modelRendezvous:
             # note chases + broken chases usually less than charge sessions total because some will break off before they get to rendezvous
@@ -384,14 +399,14 @@ class ControlCentre:
                   (timeStamp, GG.modelRendezvous, GG.onlyChargeOnce,
                    GG.dronePrint, self.wEnergy, self.wUrgency, self.proximityRadius, GG.ss.timeStep), end='')
             print("\t%i\t%.2f\t%.2f\t%.2f" % (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh), end="")
-            print("\t{:.2f}\t{:.2f}\t{:.1f}\t{:.1f}".format
+            print("\t{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}".format
                   (tmyChargeMeFlyingKWh, tmyChargeMeKWh, tmyResidualFlyingKWh, tmyResidualChargeKWh), end="")
-            print("\t%i\t%.1f\t%.1f" %
-                  (EV.evCount, EV.evChargeSteps * Drone.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)), end="")
+            print("\t%i\t%.2f\t%.2f" %
+                  (EV.evCount, EV.evChargeSteps * Drone.d0Type.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)), end="")
             print("\t{:.0f}\t{:.0f}\t{:.0f}".format(tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges), end="")
 
             if GG.modelRendezvous:
-                print("\t{}\t{:.0f}\t{}\t{}\t{}\t{}".format(tmyChaseCount, averageChase, tmyBrokenChaseCount, runstring, version, sumoVersion))
+                print("\t{}\t{:.2f}\t{}\t{}\t{}\t{}".format(tmyChaseCount, averageChase, tmyBrokenChaseCount, runstring, version, sumoVersion))
             else:
                 print("\t\t\t\t{}\t{}\t{}".format(runstring, version, sumoVersion))
 
@@ -408,7 +423,7 @@ class ControlCentre:
             print("\tResiduals:\n\t\tFlying KWh:\t{:.1f}\n\t\tCharging KWh:\t{:.1f}".format
                   (tmyResidualFlyingKWh, tmyResidualChargeKWh))
             print("\n\tEV Totals:\t(%i EVs)\n\t\tCharge KWh:\t%.1f\n\t\tCharge Gap KWh:\t%.1f" %
-                  (EV.evCount, EV.evChargeSteps * Drone.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)))
+                  (EV.evCount, EV.evChargeSteps * Drone.d0Type.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)))
             print("\t\tCharge Sessions:\n\t\t\tFull charges:\t{:.0f}\n\t\t\tPart (drone):\t{:.0f}\n\t\t\tPart (ev):\t{:.0f}".format
                   (tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges))
 
@@ -418,9 +433,9 @@ class ControlCentre:
 
             print("\nDiscrete Drone data:")
             for drone in sorted(self.freeDrones | self.needChargeDrones | set(self.allocatedDrone)):
-                droneDistance = drone.myFlyingCount * Drone.droneStepMperTimeStep / 1000.
-                droneFlyingKWh = drone.myFlyingWh / 1000.
-                droneChargeKWh = drone.myChargingWh / 1000.
+                droneDistance = drone.myFlyingCount * drone.myDt.droneStepMperTimeStep / 1000.
+                droneFlyingKWh = drone.myFlyingCount * drone.myDt.droneFlyingWhperTimeStep / 1000.
+                droneChargeKWh = drone.myEVChargingCount * drone.myDt.WhEVChargeRatePerTimeStep / 1000.
                 print("\tdrone:{}\tKm:{:.2f}\tCharge KW:{:.2f}\tFlyingKW:{:.2f}\tResidual (chargeWh:{:.0f} flyingWh:{:.0f})"
                       .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge))
 
@@ -429,6 +444,14 @@ class ControlCentre:
         self.requests[ev] = requestedWh
         if GG.chargePrint:
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), EV.EVState.CHARGEREQUESTED, "", capacity, 0.0, requestedWh), file=GG.chargeLog)
+
+    def setMaxDrones(self, pmaxDrones):
+        self.maxDrones = pmaxDrones
+        self.syncSpawnedDrones()
+
+    # if we'd generated drones from POI we need to update our spawnedDrone count
+    def syncSpawnedDrones(self):
+        self.spawnedDrones = Drone.getIDCount(self);
 
     def update(self):
         """Management of 'control centre' executed by simulation on every step"""

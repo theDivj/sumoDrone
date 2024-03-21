@@ -7,6 +7,8 @@ from GlobalClasses import GlobalClasses as GG
 from ChargeHubs import ChargeHubs
 from ControlCentre import ControlCentre
 from Simulation import Simulation
+from Drone import Drone
+
 """
     sample traci code - using a POI to represent a drone able to fly outside the network and track specific vehicles
                             network needs charging stations to launch and recharge drones
@@ -18,7 +20,7 @@ from Simulation import Simulation
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.2 17th March 2024'
+__version__ = '3.3 20th March 2024'
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -28,6 +30,8 @@ __version__ = '3.2 17th March 2024'
 #      Added dummy EVs when Drone is at charging hub to represent the Drone batteries and record their charging period - only used when chargingstations-output is configured
 #
 # v3.2 Added override to default charge request  - parameter chargeRequestWh (for vehicle or vehicleType). Handled collisions when "hiding" dummy EV's
+#
+# v3.3 Added support for defining drones in additional file(s)  - ie add.xml
 #
 
 class drClass:
@@ -83,6 +87,7 @@ class drClass:
         parser.add_argument('-t', '--droneType', help='type of drone - currently ehang184 or ehang184x', metavar='ehang184', default="ehang184")
         parser.add_argument('-we', '--wEnergy', help='weighting to apply to vehicles found in radius, default 1', metavar='n.n', type=float, default=1.0)
         parser.add_argument('-wu', '--wUrgency', help='weighting to apply to nearest vehicle urgency, default 0', metavar='n.n', type=float, default=0.0)
+        parser.add_argument('-z', '--zeroDrone', help='Only use drones defined in the ...add.xml file', action='store_const', default='True')
 
         # and parse what we actually got
         args = parser.parse_args()
@@ -109,9 +114,13 @@ class drClass:
         else:
             drClass.briefStatistics = True
 
+        if args.zeroDrone:
+            zeroDrone = False
+        else:
+            zeroDrone = True
+
         # maximum no of EVs that can be charged by Drones
         maxEVs = args.maxEVs
-        #
         randomSeed = args.randomSeed
         droneKmPerHr = args.droneKmPerHr
 
@@ -122,12 +131,17 @@ class drClass:
         # create our management objects plus ChargeHubs - which is essentially static
         ss = Simulation(drClass.sumoCmd, maxEVs)
         ch = ChargeHubs()
-        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones,args.droneType)
+        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones)
 
         # setup the global references to these objects
         gg = GG(cc, ss, ch)
         gg.setGlobals(droneKmPerHr, randomSeed, droneLog, chargeLog, onlyChargeOnce, modelRendezvous)
 
+        Drone.setDroneType(args.droneType)
+        poiDrones = Drone.setDroneTypeFromPOI(zeroDrone)
+        if zeroDrone and (poiDrones > 0):
+            cc.setMaxDrones(poiDrones)
+            
         # any output file would have been opened in parse_args() - write out the title line if needed
         if gg.dronePrint:
             print("Time Step\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=droneLog)
@@ -142,6 +156,10 @@ def main():
     import argparse    # here because pdoc gets upset if its in the stamdard position at the top of the file
     # import tracemalloc
     # tracemalloc.start()
+    
+    runstring = ""
+    for runArg in sys.argv:
+        runstring += " " + runArg
 
     parser = argparse.ArgumentParser(description="sample traci code - using a POI to represent a drone charging EVs")
     session = drClass()

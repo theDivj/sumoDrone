@@ -54,20 +54,9 @@ class EV:
         self.myCapacity = EV.chargeDoneThreshold    # we only shadow this when charging (state EV.EVState.CHARGINGFROMDRONE)
 
         self.myChargeNeededThreshold = EV.chargeNeededThreshold
+        self.myevChargeRequestWh = EV.evChargeRequestWh
 
-        # check to see if we have an override defined for charge request - could be in type or vehicle definition - vehicle takes precedence
-        vType = traci.vehicle.getTypeID(self.myID)
-        overrideChargeWh = traci.vehicletype.getParameter(vType,"chargeRequestWh")
-        vehicleOverrideChargeWh = traci.vehicle.getParameter(self.myID, "chargeRequestWh")
-        oWh = 0
-        if len(overrideChargeWh) > 1:
-           oWh = float(overrideChargeWh)
-        if len(vehicleOverrideChargeWh) > 1:
-           oWh = float(vehicleOverrideChargeWh)
-        if oWh > 1:
-           self.myevChargeRequestWh = oWh
-        else:
-           self.myevChargeRequestWh = EV.evChargeRequestWh
+        #self.setEVOverrides(self.myID)
 
         if GG.usingRandom():
             variation = EV.pRandomVariation * self.myevChargeRequestWh
@@ -80,8 +69,8 @@ class EV:
         # allowing allocation of a drone with sufficient capacity to satisfy the request
         #    (setLastChargeRequest implementation needs extension to calculate specific charge needed)
         # Drone is now responsible for stopping charging after delivering requested amount
-        self.myChargeDone = EV.chargeDoneThreshold
-        self.myLastChargeRequest = self.myevChargeRequestWh  # default
+        self.myChargeDone = self.myChargeNeededThreshold + self.myevChargeRequestWh
+        self.myLastChargeRequest =  self.myevChargeRequestWh
         EV.evCount += 1
 
     def __del__(self):
@@ -100,7 +89,7 @@ class EV:
 
     def captureStats(self):
         """Add statistics for this vehicle into class variables - called when EV leaves"""
-        EV.evChargeGap += (EV.chargeDoneThreshold - self.myCapacity)
+        EV.evChargeGap += (self.myChargeDone - self.myCapacity)
         EV.evChargeCount += self.myChargeCount
         EV.evChargeSteps += self.myChargeSteps
 
@@ -119,6 +108,31 @@ class EV:
     def leftSimulation(self):
         """State change"""
         self.myState = EV.EVState.LEFTSIMULATION
+
+    def setEVOverrides(self,myID):
+        """ check to see if we have an override defined for charge request - could be in type or vehicle definition - vehicle takes precedence"""
+        vType = traci.vehicle.getTypeID(myID)
+        overrideChargeWh = traci.vehicletype.getParameter(vType,"chargeRequestWh")
+        vehicleOverrideChargeWh = traci.vehicle.getParameter(myID, "chargeRequestWh")
+        oWh = 0
+        if len(overrideChargeWh) > 1:
+           oWh = float(overrideChargeWh)
+        if len(vehicleOverrideChargeWh) > 1:
+           oWh = float(vehicleOverrideChargeWh)
+        if oWh > 1:
+           self.myevChargeRequestWh = oWh
+
+        overrideChargeRequestThresholdWh = traci.vehicletype.getParameter(vType,"chargeRequestThresholdWh")
+        vehicleChargeRequestThresholdWh = traci.vehicle.getParameter(myID, "chargeRequestThresholdWh")
+        oWh = 0.
+        if len(overrideChargeRequestThresholdWh) > 1:
+           oWh = float(overrideChargeRequestThresholdWh)
+        if len(vehicleChargeRequestThresholdWh) > 1:
+           oWh = float(vehicleChargeRequestThresholdWh)
+        if oWh > 5000:
+           self.myChargeNeededThreshold = oWh
+
+
 
     def setLastChargeRequest(self):
         """Work out how much charge (in Wh) is needed"""
@@ -142,8 +156,8 @@ class EV:
                 self.myDrone = None
             else:       # charge completed so log charge
                 self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
-                GG.cc.notifyEVState(self, self.myState, self.myDrone, self.myCapacity)
                 self.myState = EV.EVState.DRIVING
+                GG.cc.notifyEVState(self, self.myState, self.myDrone, self.myCapacity)
                 self.myDrone = None
         else:   # not yet got to EV
             self.myState = EV.EVState.DRIVING
@@ -175,14 +189,14 @@ class EV:
 
             case EV.EVState.WAITINGFORRENDEZVOUS:
                 if self.myDrone:
-                    if self.myDrone.update(self.myRendezvous):
+                    if self.myDrone.update(self.myRendezvous)[0]:
                         self.myState = EV.EVState.WAITINGFORDRONE
 
             case EV.EVState.WAITINGFORDRONE:
                 self.setMyPosition()
                 self.myChaseSteps += 1
                 if self.myDrone:
-                    if self.myDrone.update(self.myPosition):
+                    if self.myDrone.update(self.myPosition)[0]:
                         if self.myState == EV.EVState.WAITINGFORDRONE:       # drone.update could have called EV.stopCharging
                             self.myDrone.notifyChase(True, self.myChaseSteps)
                             traci.vehicle.setColor(self.myID, (0, 255, 0, 255))  # green
@@ -198,14 +212,14 @@ class EV:
             case EV.EVState.CHARGINGFROMDRONE:
                 self.setMyPosition()
                 self.myCapacity = float(traci.vehicle.getParameter(self.myID, "device.battery.actualBatteryCapacity"))
-                chWh = self.myDrone.update(self.myPosition)
-                if chWh is False:   # either charge is finished or drone has broken off
+                uStatus, chWh = self.myDrone.update(self.myPosition)
+                if uStatus is False:   # either charge is finished or drone has broken off
+                    if self.myState == EV.EVState.CHARGEREQUESTED:     # drone broke off before charge completed
+                        self.myDrone = None
                     if self.myState == EV.EVState.DRIVING:   # Charge finished
                         traci.vehicle.setColor(self.myID, self.myColour)
                         self.myDrone = None
                         self.myChargeCount += 1
-                    elif self.myState == EV.EVState.CHARGEREQUESTED:     # drone broke off before charge completed
-                        self.myDrone = None
                 else:
                     self.myCapacity += chWh
                     traci.vehicle.setParameter(self.myID, "device.battery.actualBatteryCapacity", self.myCapacity)

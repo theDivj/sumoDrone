@@ -115,7 +115,14 @@ class ControlCentre:
 
                 hub, hubDistance = GG.ch.findNearestHub(evPos[0], evPos[1])
                 # hub, hubDistance = GG.ch.findNearestHubDriving(evID)
-                evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * ev.getMyKmPerWh()
+                evRange = 200.0
+                if self.wUrgency > 0.0:  # if we have an ugency weight then we need to calculate the range
+                    distance = float(traci.vehicle.getDistance(evID))
+                    if distance > 10000:  # can compute real range after we've been driving for a while - arbitrary 10km
+                        mWh = distance / float(traci.vehicle.getParameter(evID, "device.battery.totalEnergyConsumed"))
+                        evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * mWh / 1000.
+                    else:  #  otherwise just a guesstimate               
+                        evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * ev.getMyKmPerWh()
 
                 proximity = 1.0
                 urgency = 1.0
@@ -320,9 +327,9 @@ class ControlCentre:
 
         if GG.chargePrint:
             droneID = "-"
-            if drone != None:
+            if drone is not None:
                 droneID = drone.getID()
-            
+
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), evState, droneID, capacity, charge), file=GG.chargeLog)
 
     def printDroneStatistics(self, brief, version):
@@ -389,6 +396,7 @@ class ControlCentre:
 
         timeStamp = datetime.now().isoformat()
         # all done, dump the distance travelled by the drones and KW used
+        print("\t")   #  tidy up after the ....
         if brief:
             sumoVersion = traci.getVersion()
             runstring = sys.argv
@@ -446,12 +454,13 @@ class ControlCentre:
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), EV.EVState.CHARGEREQUESTED, "", capacity, 0.0, requestedWh), file=GG.chargeLog)
 
     def setMaxDrones(self, pmaxDrones):
+        """ update maxDrones - when --z option is used drones are limited to those in the add file"""
         self.maxDrones = pmaxDrones
         self.syncSpawnedDrones()
 
-    # if we'd generated drones from POI we need to update our spawnedDrone count
     def syncSpawnedDrones(self):
-        self.spawnedDrones = Drone.getIDCount(self);
+        """if we've generated drones from POI definitions in the add file we need to update our spawnedDrone count"""
+        self.spawnedDrones = Drone.getIDCount(self)
 
     def update(self):
         """Management of 'control centre' executed by simulation on every step"""

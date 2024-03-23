@@ -13,9 +13,9 @@ from Drone import Drone
     sample traci code - using a POI to represent a drone able to fly outside the network and track specific vehicles
                             network needs charging stations to launch and recharge drones
    run as:
-        python drclass.py [-h] [-v] [-b] [-c filePath] [-d n] [-e n] [-k n] [-l] [-m] [-o filePath] [-p metres] [-r n]
-                  [-s sumo.exe] [-t ehang184] [-we n.n] [-wu n.n]
-                  sumocfg
+        python drclass.py [-h] [-v] [-b] [-c filePath] [-d n] [-e n] [-k n] [-l] [-m]
+                    [-o filePath] [-p metres] [-r n] [-s sumo.exe] [-t ehang184] [-we n.n] [-wu n.n] [-z]
+                        sumocfg
 
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
@@ -141,7 +141,7 @@ class drClass:
         poiDrones = Drone.setDroneTypeFromPOI(zeroDrone)
         if zeroDrone and (poiDrones > 0):
             cc.setMaxDrones(poiDrones)
-            
+
         # any output file would have been opened in parse_args() - write out the title line if needed
         if gg.dronePrint:
             print("Time Step\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=droneLog)
@@ -156,7 +156,7 @@ def main():
     import argparse    # here because pdoc gets upset if its in the stamdard position at the top of the file
     # import tracemalloc
     # tracemalloc.start()
-    
+
     runstring = ""
     for runArg in sys.argv:
         runstring += " " + runArg

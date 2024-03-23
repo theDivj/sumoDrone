@@ -18,7 +18,7 @@ class Drone:
         FLYINGTOCHARGE = 5
         CHARGINGDRONE = 6
         FLYINGTOPARK = 7
-        NULL = 8
+        NULLState = 8
 
     droneIDCount = 0
     parkAtHome = False      # option to force parking/charging back to the charge hub where drone started
@@ -46,7 +46,7 @@ class Drone:
         self.myCharge = self.myDt.droneChargeWh
         self.myFlyingCharge = self.myDt.droneFlyingWh
         self.myViableCharge = True
-        self.myState = Drone.DroneState.NULL
+        self.myState = Drone.DroneState.NULLState
         self.myEV = None
 
         # logging variables
@@ -70,10 +70,10 @@ class Drone:
             traci.poi.setColor(self.myID, self.myDt.droneColour)
             traci.poi.setWidth(self.myID, self.myDt.droneWidth)
             traci.poi.setHeight(self.myID, self.myDt.droneHeight)
-            
+
         if GG.ss.useChargeHubs and not Drone.dummyEVCreated:
             Drone.createDummyEV()
-        
+
     def printDroneType(self):
         """ helper function to list current droneType values"""
         print("droneKMperh:\t", self.myDt.droneKMperh)
@@ -153,6 +153,9 @@ class Drone:
 
     @classmethod
     def setDroneTypeFromPOI(cls, zeroDrone):
+        """ Update the default DroneType - d0Type , containing drone behavior varuables
+               from a definition in an additional file - if it exists.
+             Then if the --z option is set create drones from definitions in the file"""
         POIlist = traci.poi.getIDList()
         if len(POIlist) > 0:
             for poi in POIlist:
@@ -270,7 +273,7 @@ class Drone:
             # self.myCharge = self.myDt.droneChargeWh
             # self.myFlyingCharge = self.myDt.droneFlyingWh
             self.dummyEVHide()
-            self.myState = Drone.DroneState.NULL
+            self.myState = Drone.DroneState.NULLState
             self.setViableCharge()
 
     def dummyEVInsert(self):
@@ -372,7 +375,7 @@ class Drone:
     def getIDCount(self):
         """ getter for idcount!"""
         return Drone.droneIDCount
-        
+
     def getMyPosition(self):
         """getter for position"""
         return self.myPosition
@@ -425,7 +428,7 @@ class Drone:
     def parkingUpdate(self):
         """secondary update - invoked when Control centre is managing drone"""
         match self.myState:
-            case Drone.DroneState.FLYINGTOPARK | Drone.DroneState.FLYINGTOCHARGE | Drone.DroneState.PARKED | Drone.DroneState.CHARGINGDRONE | Drone.DroneState.NULL:
+            case Drone.DroneState.FLYINGTOPARK | Drone.DroneState.FLYINGTOCHARGE | Drone.DroneState.PARKED | Drone.DroneState.CHARGINGDRONE | Drone.DroneState.NULLState:
                 pass
             case _:
                 self.myState = Drone.DroneState.FLYINGTOPARK
@@ -451,6 +454,8 @@ class Drone:
     def update(self, pos):
         """primary update - invoked directly when EV is managing drone"""
         updateStatus = True
+        updatePower = 0.0
+        
         match self.myState:
             case Drone.DroneState.PARKED:
                 self.chargeMe()            # add charge upto limit because we can
@@ -495,7 +500,7 @@ class Drone:
             case Drone.DroneState.CHARGINGEV:
                 self.fly(pos)                             # 'fly' in this case is just moving with attached to the ev
                 if self.usePower("chargeEV"):             # False when charge broken off or completed
-                    updateStatus = self.myDt.WhEVChargeRatePerTimeStep
+                    updatePower = self.myDt.WhEVChargeRatePerTimeStep
                 else:
                     updateStatus = False
                 if GG.dronePrint:
@@ -533,10 +538,10 @@ class Drone:
                     if GG.dronePrint:
                         self.logLine("flying to hub")
 
-            case Drone.DroneState.NULL:  # am charged so do nothing until allocated
+            case Drone.DroneState.NULLState:  # am charged so do nothing until allocated
                 pass
 
-        return updateStatus
+        return updateStatus, updatePower
 
     def usePower(self, mode):
         """Am flying or charging an EV so adjust my charge levels"""
@@ -567,7 +572,7 @@ class Drone:
 
         # problem - one of my batteries below contingency
         if breakOff:
-            if self.myEV:
+            if self.myEV is not None:
                 request = int(self.myRequestedCharge + 1)
                 self.myEV.stopCharging(request)   # tell EV how much charge we still need to apply to fulfil original request
                 self.myEV = None
@@ -579,7 +584,9 @@ class Drone:
             traci.poi.setColor(self.myID, (255, 0, 0, 255))
             traci.poi.setParameter(self.myID, "status", "Flying to charge")
             self.myState = Drone.DroneState.FLYINGTOCHARGE
+
             GG.cc.notifyDroneState(self)
+
             return False
         return True
 

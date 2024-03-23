@@ -15,25 +15,28 @@
         <param key="recuperationEfficiency" value=".96"/>    <!-- as above -->
         <param key="rollDragCoefficient" value="0.01"/>      <!-- as above -->
         <param key="stoppingThreshold" value="0.1"/>         <!-- as above -->
-        <param key="mass" value="1830"/>              <!-- 1682kg curb wt + average 2 passengers / bags -->
-        <param key="chargeRequestWh" value="2000"/>          <!-- new (optional) parameter to set the size of the charge request by this vehicle type -->
+        <param key="mass" value="1830"/>                     <!-- 1682kg curb wt + average 2 passengers / bags -->
+
+        <param key="chargeRequestWh" value="2000"/>          <!-- new (optional) parameter to set size of charge requests made by this vehicle type -->
+        <param key="chargeRequestThresholdWh" value="30000"/> <!-- new (optional) parameter to set threshold when a charge request is triggered -->
     </vType>
 
     <poi id="d0" type="drone" color="0,0,255" layer="250" lane="A9A8_0" imgFile='drone.png' height="10" width="10" pos="5" >
-		<param key="droneKMperh" value= "60.0"/>
-		<param key="droneChargeWh" value= "30000.0"/>
-		<param key="droneFlyingWh" value= "14400.0"/>
-		<param key="droneFlyingMinutes" value= "23"/>
-		<param key="droneChargeContingencyp" value= "0.05"/>
-		<param key="droneChargeViablep" value= "0.3"/>
-		<param key="WhEVChargeRate" value= "25000"/>
-		<param key="WhDroneRechargeRate" value= "75000"/>
+		<param key="droneKMperh" value= "60.0"/>            <!-- drone speed - too slow and we'll never catch EV's -->
+		<param key="droneChargeWh" value= "30000.0"/>       <!-- drone battery capacity available to charge - when full -->
+		<param key="droneFlyingWh" value= "14400.0"/>       <!-- drone battery capacity available to fly - when full -->
+		<param key="droneFlyingMinutes" value= "23"/>       <!-- how long drone can fly when flying battery is full -->
+		<param key="droneChargeContingencyp" value= "0.05"/>    <!-- % of charge below which we break off and head back to recharge --> 
+		<param key="droneChargeViablep" value= "0.3"/>      <!-- % of charge above which the drone is deemed available for charging EV-->
+		<param key="WhEVChargeRate" value= "25000"/>        <!-- rate at which drone will charge an EV -->
+		<param key="WhDroneRechargeRate" value= "75000"/>   <!-- rate at which drone will recharge itself -->
     </poi>
+    <!-- these drones will default to the d0 parameters above - any can be added here to override those -->
     <poi id="d91" type="drone" color="0,250,250"  layer="250" lane="E4E5_0" pos="6" />
     <poi id="d92" type="drone" color="250,250,0" layer="250" lane="C7C6_0" pos="7" />
     <poi id="d93" type="drone" color="250,250,250" layer="250" lane="D5D6_0" pos="8" />
-    <!-- StoppingPlaces -->
-    <!-- cs on diagonal -->
+    
+    <!-- cs on grid diagonal -->
     <chargingStation id="cs_0" lane="A9A8_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
     <chargingStation id="cs_1" lane="B8B7_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
     <chargingStation id="cs_2" lane="C7C6_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
@@ -53,7 +56,7 @@
     <chargingStation id="cs_17" lane="H1H2_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
     <chargingStation id="cs_18" lane="I0I1_0" startPos="0.00" endPos="10.00" friendlyPos="true" power="75000" efficiency="1.0"/>
     
-    <!-- cs on square 
+    <!-- cs on square in grid
     <chargingStation id="cs_0" lane="C7C6_0" startPos="0" endPos="10"/>
     <chargingStation id="cs_1" lane="H7G7_0" startPos="0" endPos="10"/>
     <chargingStation id="cs_2" lane="H7I7_0" startPos="0" endPos="10"/>

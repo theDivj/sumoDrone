@@ -16,6 +16,8 @@ class Simulation:
     EVs = {}                # collection for the EVs we are managing
 
     poiDrones = 0
+    
+    usingSumoGui = False    # flag to let us breadcrumb
 
     def __init__(self, sumoCmd, maxEVs):   # cpp version passes maxdrones by ref
         try:
@@ -29,7 +31,11 @@ class Simulation:
         Simulation.maxEVs = maxEVs
         if traci.simulation.getOption("chargingstations-output"):
             Simulation.useChargeHubs = True
-
+            
+        for str in sumoCmd:                 # check whether we're using sumo-gui/sumo-gui.exe
+            if str.find("sumo-gui") > 0:
+                Simulation.usingSumoGui = True
+            
     def __del__(self):
         traci.close()
         Simulation.EVs.clear()
@@ -41,6 +47,14 @@ class Simulation:
             traci.executeMove()                     #  move vehicles first so we can move drones to the same position
             Simulation.timeStep += 1
 
+            if not Simulation.usingSumoGui:
+                op = int(Simulation.timeStep / 200) * 200
+                if op == Simulation.timeStep:               #  let them know we're working
+                    print(".", end="", flush=True, file=sys.stderr)
+                    op = int(Simulation.timeStep / 16000) * 16000   # new line every 80 dots
+                    if (op == Simulation.timeStep):
+                        print("", file=sys.stderr)
+
             loadedVehicles = traci.simulation.getLoadedIDList()     # add new EVs to our management list upto the maximum allowed
             for vehID in loadedVehicles:
                 if traci.vehicle.getParameter(vehID, "has.battery.device") == "true":       # we are only interested in EVs
@@ -51,6 +65,8 @@ class Simulation:
                 arrivedVehicles = traci.simulation.getArrivedIDList()
                 for aID in arrivedVehicles:
                    if aID in Simulation.EVs:
+                        if aID == "26":
+                            print("\n26 state", Simulation.EVs[aID].myState ,"\t", Simulation.EVs[aID].myCapacity,"\t",GG.ss.timeStep)
                         Simulation.EVs[aID].leftSimulation()        # notify EV shadow that the vehicle has left
                         Simulation.EVs[aID].update()                #  run the update as we will be removing this from the management loop
                         del Simulation.EVs[aID]
@@ -64,4 +80,5 @@ class Simulation:
         return False
 
     def setMaxEvs(self, pmaxEVs):
+        """set a limit to the number of EVs we handle - default is no limit"""
         Simulation.maxEVs = pmaxEVs

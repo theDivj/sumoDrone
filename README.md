@@ -3,24 +3,24 @@
 
 >   a faster, C++ version of this code, using libsumo, is available as SumoDrone-Cpp                                    
 ---
-  Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model
-  they then get charged by the nearest drone, that is not busy, after which the drone will return to the nearest charge hub - or another vehicle if required  
+ This software layers on top of a SUMO model using libsumo/libtraci to model the use of Drones in recharging vehicles. Drones are dispatched from charging stations and return there to recharge. POIs are used to represent drones in sumo-gui. Both Drones and Vehicles turn red when their charge threshold is reached and green whilst recharging. The assumption is that the Drone travels coupled with the vehicle when recharging and only ‘flies’ between charging stations and vehicles/between vehicles.
+ 
+When vehicles reach a charge threshold they request a charge from a control centre which dispatches the nearest drone when available. 
 
-  Charging stations(need to be created on the road network and are 'discovered' in the code. These are used to launch and 'charge' drones
-  The SUMO default for these is that the charging power is 0 - so they won't charge vehicles even if the vehicles stop at the station.
+When charging is complete/the drone is out of charge, then the drone goes to the nearest charging station to recharge, or to the nearest vehicle
+in range with the most urgent charge need.
 
-  This code uses the nearest free drone, or if none free, then one will be spawned (upto a limit) from the nearest charging station.
-  When charging is complete/the drone is out of charge then the drone goes to the nearest chargeing station to recharge.
+Charging stations(need to be created on the road network and are 'discovered' in the code. These are used to launch and 'charge' drones.
+Drone and Vehicle behaviour depend on defaults set in additional files. 
 
-  The parameters used for the Drone in this model correspond to those of an Ehang 184 which has top speed of 60km/h, and a 14.4 KW battery giving 23 mins flight time.
-  The order of allocation of drones to vehicles is dependant on the 'urgency' the ratio between the distance to the nearest charge point and the remaining charge
+The default parameters used for the Drone in this model correspond to those of an Ehang 184 which has top speed of 60km/h, and a 14.4 KW battery, giving 23 mins flight time.
 
-  In sumo-gui, vehicles and drones turn red when they need charging and green when they are actually charging.
-  
-    (These scripts were created as a test of the feasibility of using POIs to model movements outside the sumo road network.)
+The order of allocation of drones to vehicles is dependant on the 'urgency' the ratio between the distance to the nearest charge point and the remaining charge.
 
+There are Python (using libtraci) and C++ (using libsumo) versions of this code. The Python version defaults to using sumo-gui.
+The C++ version can only use libsumo at the moment. (libsumo doesn’t yet support sumo-gui.)
   
 ---
-  > Note that the charge "requested" by the ev defaults to 2kW. This can be modified by use of a vehicle or vehicleType parameter:  chargeRequestWh
+  > Note that the charge "requested" by the ev defaults to 2kW. This can be modified by use of a vehicle or vehicleType parameter: chargeRequestWh
         eg \<param key="chargeRequestWh" value="10000"/\>   would set a charge request size of 10kW.  In all cases use of the -r option varies the request by +/- 30%
 ---

@@ -137,7 +137,7 @@ class Drone:
             case "ehang184x":            # ehang 184 with artificially increased battery sizes so they don't need recharging
                 Drone.d0Type.droneChargeWh = 3000000.     # 100 * actual
                 Drone.d0Type.droneFlyingWh = 14400000.
-                Drone.d0Type.droneFlyingWhperTimeStep = 14400 / (23 * 60.)
+                Drone.d0Type.droneFlyingWhperTimeStep = 14400. / (23 * 60.)
                 Drone.d0Type.droneChargeContingencyp = 0.05              # minimum contingency level %
                 Drone.d0Type.droneChargeViablep = 0.3                    # minimum viable level %
                 Drone.d0Type.WhEVChargeRatePerTimeStep = 25000 / 3600.   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
@@ -280,7 +280,6 @@ class Drone:
         """If we are generating charge station output add dummy EVs to the charge station for the drone batteries - whilst the drone is there"""
         if GG.ss.useChargeHubs:
             e,p = self.myParkEP
-            lane = e + "_0"
             dummyFB = self.myID + "-FB"
             traci.vehicle.add(dummyFB,e,"Drone",departLane=0,departPos=p)
             traci.vehicle.setParameter(dummyFB, "device.battery.maximumBatteryCapacity", self.myDt.droneFlyingWh)
@@ -294,31 +293,35 @@ class Drone:
             traci.vehicle.setParameter(dummyCB, "device.battery.actualBatteryCapacity", self.myCharge)
             traci.vehicle.setEmissionClass(dummyCB, "Energy/unknown")
             traci.vehicle.setStop(dummyCB, e, pos=p + 0.5, duration=10000.0, flags=1)
- 
+
             self.myDummyEVInserted = True
 
     def dummyEVHide(self):
-        """remove the dummy EVs   - we need to resume before remove to avoid the aborted stop warning However 
+        """remove the dummy EVs   - we need to resume before remove to avoid the aborted stop warning However
             insertion may have collided and teleported/removed the EV so we need to check the list maintained by simulation before we try"""
         if GG.ss.useChargeHubs and self.myDummyEVInserted:
             dummyFB = self.myID + "-FB"
             try:
-                traci.vehicle.resume(dummyFB)
+                stState = traci.vehicle.getStopState(dummyFB)
+                if stState & 2 == 2:                          # only need to resume if it's actually stopped
+                    traci.vehicle.resume(dummyFB)
             except Exception as e:
                 pass
-                #print("resume except ",e)  - need to sort out why we hit this - something to do with allocation just as parking
+                #print("resume except ",e)  - was doing a resums when parking had not actually happened - may not need this now
             finally:
                 traci.vehicle.remove(dummyFB)
-                    
+
             dummyCB = self.myID + "-CB"
             try:
-                traci.vehicle.resume(dummyCB)               
+                stState = traci.vehicle.getStopState(dummyCB)
+                if stState & 2 == 2:
+                    traci.vehicle.resume(dummyCB)
             except Exception as e:
                 pass
                 # print("resume except ",e)
             finally:
                 traci.vehicle.remove(dummyCB)
-            
+
             self.myDummyEVInserted = False
 
     def fly(self, pos):
@@ -412,6 +415,7 @@ class Drone:
                 if self.myState not in (Drone.DroneState.CHARGINGDRONE, Drone.DroneState.PARKED):
                     self.park()
                 else:
+                    self.dummyEVHide()
                     self.myEV = None
 
             case EV.EVState.DRIVING:
@@ -456,7 +460,7 @@ class Drone:
         """primary update - invoked directly when EV is managing drone"""
         updateStatus = True
         updatePower = 0.0
-        
+
         match self.myState:
             case Drone.DroneState.PARKED:
                 self.chargeMe()            # add charge upto limit because we can

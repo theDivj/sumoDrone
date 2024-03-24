@@ -111,7 +111,7 @@ class Drone:
         traci.vehicletype.copy("DEFAULT_VEHTYPE","Drone")
         traci.vehicletype.setWidth("Drone","0.1")
         traci.vehicletype.setLength("Drone","0.1")
-        traci.vehicletype.setMinGap("Drone","0.0")
+        traci.vehicletype.setMinGap("Drone","0.1")
         traci.vehicletype.setParameter("Drone", "has.battery.device", "True")
         traci.vehicletype.setEmissionClass("Drone", "Energy/unknown")
         Drone.dummyEVCreated = True
@@ -282,43 +282,44 @@ class Drone:
             e,p = self.myParkEP
             lane = e + "_0"
             dummyFB = self.myID + "-FB"
-            try:
-                traci.vehicle.add(dummyFB,e,"Drone")
-            finally:
-                traci.vehicle.setParameter(dummyFB, "device.battery.maximumBatteryCapacity", self.myDt.droneFlyingWh)
-                traci.vehicle.setParameter(dummyFB, "device.battery.actualBatteryCapacity", self.myFlyingCharge)
-                traci.vehicle.setEmissionClass(dummyFB, "Energy/unknown")
-                traci.vehicle.moveTo(dummyFB,lane,p)
-                traci.vehicle.setStop(dummyFB, e, pos=p, duration=10000.0, flags=1)
+            traci.vehicle.add(dummyFB,e,"Drone",departLane=0,departPos=p)
+            traci.vehicle.setParameter(dummyFB, "device.battery.maximumBatteryCapacity", self.myDt.droneFlyingWh)
+            traci.vehicle.setParameter(dummyFB, "device.battery.actualBatteryCapacity", self.myFlyingCharge)
+            traci.vehicle.setEmissionClass(dummyFB, "Energy/unknown")
+            traci.vehicle.setStop(dummyFB, e, pos=p, duration=10000.0, flags=1)
 
             dummyCB = self.myID + "-CB"
-            try:
-                traci.vehicle.add(dummyCB,e,"Drone")
-            finally:
-                traci.vehicle.setParameter(dummyCB, "device.battery.maximumBatteryCapacity", self.myDt.droneChargeWh)
-                traci.vehicle.setParameter(dummyCB, "device.battery.actualBatteryCapacity", self.myCharge)
-                traci.vehicle.setEmissionClass(dummyCB, "Energy/unknown")
-                traci.vehicle.moveTo(dummyCB,lane,p + 0.5)
-                traci.vehicle.setStop(dummyCB, e, pos=p + 0.5, duration=10000.0, flags=1)
-                self.myDummyEVInserted = True
+            traci.vehicle.add(dummyCB,e,"Drone",departLane=0,departPos=p+0.5)
+            traci.vehicle.setParameter(dummyCB, "device.battery.maximumBatteryCapacity", self.myDt.droneChargeWh)
+            traci.vehicle.setParameter(dummyCB, "device.battery.actualBatteryCapacity", self.myCharge)
+            traci.vehicle.setEmissionClass(dummyCB, "Energy/unknown")
+            traci.vehicle.setStop(dummyCB, e, pos=p + 0.5, duration=10000.0, flags=1)
+ 
+            self.myDummyEVInserted = True
 
     def dummyEVHide(self):
-        """remove the dummy EVs   - we need to resume before remove to avoid the aborted stop warning. However that risks a collision
-            meaning the vehicle teleports, is already removed and we get an exception when we try to remove
-            - so need the try blocks to catch this and ensure the insert flag is cleared"""
+        """remove the dummy EVs   - we need to resume before remove to avoid the aborted stop warning However 
+            insertion may have collided and teleported/removed the EV so we need to check the list maintained by simulation before we try"""
         if GG.ss.useChargeHubs and self.myDummyEVInserted:
-            e,p = self.myParkEP
             dummyFB = self.myID + "-FB"
             try:
                 traci.vehicle.resume(dummyFB)
-                traci.vehicle.remove(dummyFB)
+            except Exception as e:
+                pass
+                #print("resume except ",e)  - need to sort out why we hit this - something to do with allocation just as parking
             finally:
-                dummyCB = self.myID + "-CB"
-                try:
-                    traci.vehicle.resume(dummyCB)
-                    traci.vehicle.remove(dummyCB)
-                finally:
-                    self.myDummyEVInserted = False
+                traci.vehicle.remove(dummyFB)
+                    
+            dummyCB = self.myID + "-CB"
+            try:
+                traci.vehicle.resume(dummyCB)               
+            except Exception as e:
+                pass
+                # print("resume except ",e)
+            finally:
+                traci.vehicle.remove(dummyCB)
+            
+            self.myDummyEVInserted = False
 
     def fly(self, pos):
         """move the drone along a straight line to pos by the amount Drone can move in a timeStep,

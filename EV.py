@@ -56,7 +56,7 @@ class EV:
         self.myChargeNeededThreshold = EV.chargeNeededThreshold
         self.myevChargeRequestWh = EV.evChargeRequestWh
 
-        #self.setEVOverrides(self.myID)
+        self.setEVOverrides(self.myID)
 
         if GG.usingRandom():
             variation = EV.pRandomVariation * self.myevChargeRequestWh

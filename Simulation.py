@@ -14,7 +14,6 @@ class Simulation:
 
     timeStep = 0            # running count of simulation steps
     EVs = {}                # collection for the EVs we are managing
-
     poiDrones = 0
     
     usingSumoGui = False    # flag to let us breadcrumb
@@ -61,15 +60,20 @@ class Simulation:
                     if len(Simulation.EVs) < Simulation.maxEVs:
                         Simulation.EVs[vehID] = EV(vehID,EV.kmPerWh)   # can set kmPerWh here to cater for different EVs - get from an EV parameter?
 
+            #tlist = traci.simulation.getStartingTeleportIDList();
+            #if len(tlist) > 0:
+            #    for  tport in tlist:
+            #       if tport.endswith("-CB") or tport.endswith("-FB"):
+            #           Simulation.tports.append(tport)
+
+
             if traci.simulation.getArrivedNumber() > 0:             # handle vehicles that have left the simulation
                 arrivedVehicles = traci.simulation.getArrivedIDList()
                 for aID in arrivedVehicles:
                    if aID in Simulation.EVs:
-                        if aID == "26":
-                            print("\n26 state", Simulation.EVs[aID].myState ,"\t", Simulation.EVs[aID].myCapacity,"\t",GG.ss.timeStep)
-                        Simulation.EVs[aID].leftSimulation()        # notify EV shadow that the vehicle has left
-                        Simulation.EVs[aID].update()                #  run the update as we will be removing this from the management loop
-                        del Simulation.EVs[aID]
+                       Simulation.EVs[aID].leftSimulation()        # notify EV shadow that the vehicle has left
+                       Simulation.EVs[aID].update()                #  run the update as we will be removing this from the management loop
+                       del Simulation.EVs[aID]
 
             for vehID,ev in Simulation.EVs.items():     # run the update (state machine) for each EV  we are managing
                 ev.update()

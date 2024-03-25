@@ -20,7 +20,7 @@ from Drone import Drone
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.3 20th March 2024'
+__version__ = '3.3 25th March 2024'
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -39,7 +39,8 @@ class drClass:
     briefStatistics = False     # whether to output single line summary statistics
     maxEvs = sys.maxsize        # maximum no of EVs that can be shadowed
 
-    sumoCmd = None  # The sumo runstring
+    sumoCmd = None      # The sumo runstring
+    runstring = None    # the drClass.py runstring
 
     def __ini__(self):
         """Check whether we have access to sumo and parse runstring"""
@@ -54,7 +55,7 @@ class drClass:
         # output statistics
         if GG.cc is not None:
             GG.cc.tidyDrones()
-            GG.cc.printDroneStatistics(drClass.briefStatistics, __version__)
+            GG.cc.printDroneStatistics(drClass.briefStatistics, __version__, self.runstring)
 
         # tidy up
         if GG.dronePrint:
@@ -69,7 +70,7 @@ class drClass:
 
     def parseRunstring(self, parser=None, argparse=None):
         """use argparse to parse runstring and set our variables"""
-        parser.add_argument('-v', '--version', action='version', version='%(prog)s' + __version__)
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
         # set up the expected runstring
         parser.add_argument('sumocfg', help='sumo configuration file')            # mandatory - sumo configuration
@@ -158,12 +159,15 @@ def main():
     # import tracemalloc
     # tracemalloc.start()
 
-    runstring = ""
+    runstring = ""                 # runstring to be used in print output
     for runArg in sys.argv:
         runstring += " " + runArg
 
+
     parser = argparse.ArgumentParser(description="sample traci code - using a POI to represent a drone charging EVs")
     session = drClass()
+    session.runstring = runstring
+    
     gg = session.parseRunstring(parser, argparse)
     del parser
 

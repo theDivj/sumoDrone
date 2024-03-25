@@ -15,7 +15,7 @@ class Simulation:
     timeStep = 0            # running count of simulation steps
     EVs = {}                # collection for the EVs we are managing
     poiDrones = 0
-    
+
     usingSumoGui = False    # flag to let us breadcrumb
 
     def __init__(self, sumoCmd, maxEVs):   # cpp version passes maxdrones by ref
@@ -30,11 +30,11 @@ class Simulation:
         Simulation.maxEVs = maxEVs
         if traci.simulation.getOption("chargingstations-output"):
             Simulation.useChargeHubs = True
-            
-        for str in sumoCmd:                 # check whether we're using sumo-gui/sumo-gui.exe
-            if str.find("sumo-gui") > 0:
+
+        for arg in sumoCmd:                 # check whether we're using sumo-gui/sumo-gui.exe
+            if arg.find("sumo-gui") > 0:
                 Simulation.usingSumoGui = True
-            
+
     def __del__(self):
         traci.close()
         Simulation.EVs.clear()
@@ -51,7 +51,7 @@ class Simulation:
                 if op == Simulation.timeStep:               #  let them know we're working
                     print(".", end="", flush=True, file=sys.stderr)
                     op = int(Simulation.timeStep / 16000) * 16000   # new line every 80 dots
-                    if (op == Simulation.timeStep):
+                    if op == Simulation.timeStep:
                         print("", file=sys.stderr)
 
             loadedVehicles = traci.simulation.getLoadedIDList()     # add new EVs to our management list upto the maximum allowed

@@ -10,7 +10,7 @@ from Drone import Drone
 
 class ControlCentre:
     """Main class receiving requests from EV's and notifications from Drones and EV's when charge completes or Drone is out of battery"""
-    
+
     def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, droneType="ehang184"):
         self.wEnergy = float(wEnergy)
         self.wUrgency = float(wUrgency)
@@ -122,7 +122,7 @@ class ControlCentre:
                     if distance > 10000:  # can compute real range after we've been driving for a while - arbitrary 10km
                         mWh = distance / float(traci.vehicle.getParameter(evID, "device.battery.totalEnergyConsumed"))
                         evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * mWh / 1000.
-                    else:  #  otherwise just a guesstimate               
+                    else:  #  otherwise just a guesstimate
                         evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * ev.getMyKmPerWh()
 
                 proximity = 1.0
@@ -333,7 +333,7 @@ class ControlCentre:
 
             print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), evState, droneID, capacity, charge), file=GG.chargeLog)
 
-    def printDroneStatistics(self, brief, version):
+    def printDroneStatistics(self, brief, version, runstring):
         """Print out Drone and EV statistics for the complete run"""
         # compute drone statistic totals
         tmyFlyingCount = 0           # used to compute distance travelled
@@ -400,7 +400,6 @@ class ControlCentre:
         print("\t")   #  tidy up after the ....
         if brief:
             sumoVersion = traci.getVersion()
-            runstring = sys.argv
             print("Date\tRv\tOnce\tOutput\twE\twU\tradius\tSteps\t# Drones"
                   "\tDistance\tFlyKWh\tchKWh\tFlyChgKWh\tChgKWh\trFlyKWh\trChKWh"
                   "\t# EVs\tEVChg\tEVgap\tFull\tbrDrone\tbrEV\tChases\tAvg Chase\tBrk Chase")
@@ -464,11 +463,12 @@ class ControlCentre:
         self.spawnedDrones = Drone.getIDCount(self)
 
     def tidyDrones(self):
+        """remove any dummy vehicles left after all vehicles have left - ie simulation has finished"""
         if self.insertedDummies > 0:
             for drone in self.freeDrones | self.needChargeDrones:
                 if drone.myDummyEVInserted:
                     drone.dummyEVHide()
-         
+
     def update(self):
         """Management of 'control centre' executed by simulation on every step"""
         availableDrones = len(self.freeDrones) + self.maxDrones - self.spawnedDrones

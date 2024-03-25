@@ -8,9 +8,9 @@ from GlobalClasses import GlobalClasses as GG
 from EV import EV
 from Drone import Drone
 
-
 class ControlCentre:
     """Main class receiving requests from EV's and notifications from Drones and EV's when charge completes or Drone is out of battery"""
+    
     def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, droneType="ehang184"):
         self.wEnergy = float(wEnergy)
         self.wUrgency = float(wUrgency)
@@ -26,6 +26,7 @@ class ControlCentre:
         self.droneType = droneType
 
         self.spawnedDrones = 0
+        self.insertedDummies = 0
 
 
     def allocate(self, drone, ev):
@@ -462,6 +463,12 @@ class ControlCentre:
         """if we've generated drones from POI definitions in the add file we need to update our spawnedDrone count"""
         self.spawnedDrones = Drone.getIDCount(self)
 
+    def tidyDrones(self):
+        if self.insertedDummies > 0:
+            for drone in self.freeDrones | self.needChargeDrones:
+                if drone.myDummyEVInserted:
+                    drone.dummyEVHide()
+         
     def update(self):
         """Management of 'control centre' executed by simulation on every step"""
         availableDrones = len(self.freeDrones) + self.maxDrones - self.spawnedDrones

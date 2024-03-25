@@ -53,6 +53,7 @@ class drClass:
         """Print statistics and close any files"""
         # output statistics
         if GG.cc is not None:
+            GG.cc.tidyDrones()
             GG.cc.printDroneStatistics(drClass.briefStatistics, __version__)
 
         # tidy up

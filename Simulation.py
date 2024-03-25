@@ -42,7 +42,7 @@ class Simulation:
     @classmethod
     def step(cls):
         """Simulation step"""
-        if traci.simulation.getMinExpectedNumber() > 0:
+        if  traci.simulation.getMinExpectedNumber() > GG.cc.insertedDummies:
             traci.executeMove()                     #  move vehicles first so we can move drones to the same position
             Simulation.timeStep += 1
 

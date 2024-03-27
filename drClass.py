@@ -20,7 +20,7 @@ from Drone import Drone
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.3 25th March 2024'
+__version__ = '3.3 at least'    # default - should be overwritten by getVersion()
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -53,9 +53,10 @@ class drClass:
     def __del__(self):
         """Print statistics and close any files"""
         # output statistics
+        version = self.getVersion()
         if GG.cc is not None:
             GG.cc.tidyDrones()
-            GG.cc.printDroneStatistics(drClass.briefStatistics, __version__, self.runstring)
+            GG.cc.printDroneStatistics(drClass.briefStatistics, version, self.runstring)
 
         # tidy up
         if GG.dronePrint:
@@ -152,6 +153,24 @@ class drClass:
 
         return gg
 
+    def getVersion(self):
+        """fudge to extract version from a C++ header file"""
+        try:
+            vf = open("version.h","r")
+            vfile = vf.readlines()
+            vf.close()
+            for vstr in vfile:
+                vp = vstr.find("#define")
+                if vp >= 0:
+                    vp = vstr.find("__version__")
+                    if vp > 1:
+                        vstr = vstr[vp+12:]
+                        vstr = vstr.replace("\"","")
+                        vstr = vstr.strip()
+                        return vstr
+        except:
+            pass
+        return __version__
 
 def main():
     """Instantiate!"""
@@ -163,11 +182,10 @@ def main():
     for runArg in sys.argv:
         runstring += " " + runArg
 
-
     parser = argparse.ArgumentParser(description="sample traci code - using a POI to represent a drone charging EVs")
     session = drClass()
     session.runstring = runstring
-    
+
     gg = session.parseRunstring(parser, argparse)
     del parser
 

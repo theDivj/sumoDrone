@@ -101,7 +101,11 @@ class ControlCentre:
             creates a list of ev's that want charge, have not been allocated a drone
         """
         urgencyList = {}
-        if len(self.requests) == 1:
+        proximityList = {}
+        urgencySum = 0.0
+        proximitySum = 0.0
+
+        if len(self.requests) == 1:    #  only one request so return that
           for ev in self.requests:
             urgencyList[ev] = 1.0
 
@@ -116,7 +120,8 @@ class ControlCentre:
 
                 hub, hubDistance = GG.ch.findNearestHub(evPos[0], evPos[1])
                 # hub, hubDistance = GG.ch.findNearestHubDriving(evID)
-                evRange = 200.0
+
+                evRange = 10000.0         # arbitrary default to make this visible outside if statement
                 if self.wUrgency > 0.0:  # if we have an ugency weight then we need to calculate the range
                     distance = float(traci.vehicle.getDistance(evID))
                     if distance > 10000:  # can compute real range after we've been driving for a while - arbitrary 10km
@@ -124,12 +129,17 @@ class ControlCentre:
                         evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * mWh / 1000.
                     else:  #  otherwise just a guesstimate
                         evRange = float(traci.vehicle.getParameter(evID, "device.battery.actualBatteryCapacity")) * ev.getMyKmPerWh()
+                    urgency = hubDistance/evRange
 
-                proximity = 1.0
-                urgency = 1.0
-                if self.wEnergy != 0.0:            # We have a weight so need to calculate proximity
+                    urgencyList[ev] = urgency
+                    urgencySum += urgency
+
+                else:                      # for corner case where both weights are <= 0.0
+                    urgencyList[ev] = 0.0
+
+                if self.wEnergy > 0.0:            # We have a weight so need to calculate proximity
                     neighbours, meanDist = self.getNeighboursNeedingCharge(ev, firstCall)
-                    firstCall = False
+                    firstCall = False              # getneighbours will have set position for all evs
 
                     # find distance for nearest drone to this eV - usually only one drone so will be the one allocated
                     droneDist = self.proximityRadius    # default - should never happen - otherwise fn wouldn't be called
@@ -151,10 +161,21 @@ class ControlCentre:
                     else:
                        proximity = droneDist + meanDist  # / drivingDistance
 
-                else:
-                    urgency = hubDistance/evRange
+                    proximityList[ev] = proximity
+                    proximitySum += proximity
 
-                CEC = (proximity * self.wEnergy) + (urgency * self.wUrgency)
+            if self.wEnergy <= 0.0:
+                return urgencyList
+            if self.wUrgency <= 0.0:
+                return proximityList
+
+            #  non zero values for both so need to normalise
+            evCount = len(urgencyList)
+            proximityWt = self.wEnergy / (proximitySum/evCount)
+            urgencyWt = self.wUrgency / (urgencySum/evCount)
+
+            for ev in proximityList:
+                CEC = (proximityList[ev] * proximityWt) + (urgencyList[ev] * urgencyWt)
                 urgencyList[ev] = CEC
 
         return urgencyList

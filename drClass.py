@@ -20,7 +20,7 @@ from Drone import Drone
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.3 at least'    # default - should be overwritten by getVersion()
+__version__ = '3.4 at least'    # default - should be overwritten by getVersion()
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -33,7 +33,8 @@ __version__ = '3.3 at least'    # default - should be overwritten by getVersion(
 #
 # v3.3 Added support for defining drones in additional file(s)  - ie add.xml
 #
-
+# v3.4 Corrected bug that ignored fractional weights for wurgency - updated calculation to equalise proximity vs urgency weight behaviour 
+#
 class drClass:
     """Wrapper class to setup and execute simulation"""
     briefStatistics = False     # whether to output single line summary statistics

@@ -13,14 +13,14 @@ from Drone import Drone
     sample traci code - using a POI to represent a drone able to fly outside the network and track specific vehicles
                             network needs charging stations to launch and recharge drones
    run as:
-        python drclass.py [-h] [-v] [-b] [-c filePath] [-d n] [-e n] [-k n] [-l] [-m]
-                    [-o filePath] [-p metres] [-r n] [-s sumo.exe] [-t ehang184] [-we n.n] [-wu n.n] [-z]
-                        sumocfg
+        python drclass.py [-h] [-v] [-b] [-c filePath] [-d n] [-e n] [-f n] [-k n] [-l] [-m] [-o filePath] [-p metres] [-r n] [-s sumo.exe] 
+            [-t ehang184] [-u] [-we n.n] [-wu n.n] [-z]
+                  sumocfg
 
    This program is made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/
     updated rendezvous point algorithm from: https://www.codeproject.com/Articles/990452/Interception-of-Two-Moving-Objects-in-D-Space
 """
-__version__ = '3.4 at least'    # default - should be overwritten by getVersion()
+__version__ = '3.5 at least'    # default - should be overwritten by getVersion()
 #
 # v3.0 is a complete rewrite as object code - replacing the quick and dirty original which was becoming spaghetti
 #
@@ -33,7 +33,9 @@ __version__ = '3.4 at least'    # default - should be overwritten by getVersion(
 #
 # v3.3 Added support for defining drones in additional file(s)  - ie add.xml
 #
-# v3.4 Corrected bug that ignored fractional weights for wurgency - updated calculation to equalise proximity vs urgency weight behaviour 
+# v3.4 Corrected bug that ignored fractional weights for wurgency - updated calculation to equalise proximity vs urgency weight behaviour
+#
+# v3.5 Added runstring and add file option to use charge battery for flying. Added runstring option to try to avoid charges breaking when ev 'arrives'
 #
 class drClass:
     """Wrapper class to setup and execute simulation"""
@@ -81,6 +83,7 @@ class drClass:
         parser.add_argument('-c', '--chargeFile', help='file for output of detailed EV charge levels beginning/end of charge, default no output', metavar='filePath', type=argparse.FileType('a'))
         parser.add_argument('-d', '--maxDrones', help='maximum drones to spawn, default is 6', metavar='n', type=int, default=6)
         parser.add_argument('-e', '--maxEVs', help='maximum EVs that are allowed to charge by Drone, default is no limit', metavar='n', type=int, default=sys.maxsize)
+        parser.add_argument('-f', '--fullChargeTolerance', help='tolerance (s) use > 0 ensure only full charges', metavar='n', type=int, default=0)
         parser.add_argument('-k', '--droneKmPerHr', help='drone speed Km/h', metavar='n', type=float, default=60.0)
         parser.add_argument('-l', '--lineOfSight', help='route drone to EV by line of sight at each step, default is to compute a rendezvous point\n', action='store_const', default='True')
         parser.add_argument('-m', '--multipleCharge', help='Allow EVs to be charged more than once - default is only once', action='store_const', default='True')
@@ -89,8 +92,9 @@ class drClass:
         parser.add_argument('-r', '--randomSeed', help='seed for random generator triggering requests and sizeof requests', metavar='n', type=int, default=0)
         parser.add_argument('-s', '--sumoBinary', help='sumo binary to execute against configuration, default is sumo-gui.exe', metavar='sumo.exe', default="sumo-gui.exe")
         parser.add_argument('-t', '--droneType', help='type of drone - currently ehang184 or ehang184x', metavar='ehang184', default="ehang184")
-        parser.add_argument('-we', '--wEnergy', help='weighting to apply to vehicles found in radius, default 1', metavar='n.n', type=float, default=1.0)
-        parser.add_argument('-wu', '--wUrgency', help='weighting to apply to nearest vehicle urgency, default 0', metavar='n.n', type=float, default=0.0)
+        parser.add_argument('-u', '--useOneBattery', help='use the charge battery for flying',action='store_const', default='False')
+        parser.add_argument('-we', '--wEnergy','--we', help='weighting to apply to vehicles found in radius, default 1', metavar='n.n', type=float, default=1.0)
+        parser.add_argument('-wu', '--wUrgency','--wu', help='weighting to apply to nearest vehicle urgency, default 0', metavar='n.n', type=float, default=0.0)
         parser.add_argument('-z', '--zeroDrone', help='Only use drones defined in the ...add.xml file', action='store_const', default='True')
 
         # and parse what we actually got
@@ -123,6 +127,12 @@ class drClass:
         else:
             zeroDrone = True
 
+        if args.useOneBattery:
+            useOneBattery = False
+        else:
+            useOneBattery = True
+
+
         # maximum no of EVs that can be charged by Drones
         maxEVs = args.maxEVs
         randomSeed = args.randomSeed
@@ -135,14 +145,15 @@ class drClass:
         # create our management objects plus ChargeHubs - which is essentially static
         ss = Simulation(drClass.sumoCmd, maxEVs)
         ch = ChargeHubs()
-        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones)
+        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones, args.fullChargeTolerance)
 
         # setup the global references to these objects
         gg = GG(cc, ss, ch)
         gg.setGlobals(droneKmPerHr, randomSeed, droneLog, chargeLog, onlyChargeOnce, modelRendezvous)
 
-        Drone.setDroneType(args.droneType)
-        poiDrones = Drone.setDroneTypeFromPOI(zeroDrone)
+        Drone.setDroneType(useOneBattery, args.droneType)
+        if args.droneType != "ehang184x":
+            poiDrones = Drone.setDroneTypeFromPOI(useOneBattery, zeroDrone)
         if zeroDrone and (poiDrones > 0):
             cc.setMaxDrones(poiDrones)
 

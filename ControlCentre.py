@@ -11,11 +11,12 @@ from Drone import Drone
 class ControlCentre:
     """Main class receiving requests from EV's and notifications from Drones and EV's when charge completes or Drone is out of battery"""
 
-    def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, droneType="ehang184"):
+    def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, fullChargeTolerance=0, droneType="ehang184"):
         self.wEnergy = float(wEnergy)
         self.wUrgency = float(wUrgency)
         self.proximityRadius = proximityRadius
         self.maxDrones = maxDrones
+        self.fullChargeTolerance = fullChargeTolerance
 
         self.requests = {}
         self.allocatedEV = {}
@@ -49,8 +50,12 @@ class ControlCentre:
         nd = self.maxDrones - self.spawnedDrones
         if ld == 1:
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
-                self.allocate(self.freeDrones.pop(), ev)
-                break
+                if self.chargeCanComplete(ev):
+                    self.allocate(self.freeDrones.pop(), ev)
+                    break
+
+                del self.requests[ev]
+
         elif ld < 1 and nd > 0:
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
                 evPos = ev.getMyPosition()
@@ -64,26 +69,32 @@ class ControlCentre:
 
         elif ld > 1:  # need to find drone nearest the ev before we allocate
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
-                evPos = ev.getMyPosition()
-                nearestDrone = None
-                evDistance = sys.float_info.max
-                for drone in self.freeDrones:
-                    dronePos = drone.getMyPosition()
-                    distance = math.dist(evPos, dronePos)
-                    if distance < evDistance:
-                        nearestDrone = drone
-                        evDistance = distance
-                if nearestDrone is not None:
-                    self.allocate(nearestDrone, ev)
-                    self.freeDrones.remove(nearestDrone)
-                elif nd > 0:
-                    (x, y, e, p), hubDistance = GG.ch.nearestHubLocation(evPos)
-                    drone = Drone((x, y),"", None)
-                    self.spawnedDrones += 1
-                    self.allocate(drone, ev)
-                    nd -= 1
-                    if nd <= 0:
-                        break
+                if self.chargeCanComplete(ev):
+                    evPos = ev.getMyPosition()
+                    nearestDrone = None
+                    evDistance = sys.float_info.max
+                    droneID = ""
+                    for drone in self.freeDrones:
+                        dronePos = drone.getMyPosition()
+                        distance = math.dist(evPos, dronePos)
+                        if distance < evDistance or (distance == evDistance and drone.getID() > droneID):
+                            nearestDrone = drone
+                            evDistance = distance
+                            droneID = drone.getID()
+                    if nearestDrone is not None:
+                        self.allocate(nearestDrone, ev)
+                        self.freeDrones.remove(nearestDrone)
+                    elif nd > 0:
+                        (x, y, e, p), hubDistance = GG.ch.nearestHubLocation(evPos)
+                        drone = Drone((x, y),"", None)
+                        self.spawnedDrones += 1
+                        self.allocate(drone, ev)
+                        nd -= 1
+                        if nd <= 0:
+                            break
+                else:
+                    del self.requests[ev]
+
 
         else:   # ld == 0 nd >0
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
@@ -179,6 +190,23 @@ class ControlCentre:
                 urgencyList[ev] = CEC
 
         return urgencyList
+
+    def chargeCanComplete(self, ev):
+        """ Estimate whether there will be time for the charge to complete """
+        if self.fullChargeTolerance <= 0:    # don't care whether it will complete
+            return True
+
+        evID = ev.getID()
+        evRoute = traci.vehicle.getRoute(evID)
+        lastEdge = evRoute[len(evRoute)-1]
+        dDist = traci.vehicle.getDrivingDistance(evID,lastEdge,0) # get distance to start of last edge in route (length of edge "ignored"as tolerance)
+        evSpeed = 0.9 * traci.vehicle.getAllowedSpeed(evID)       # use same speed estimate as in find rendezvousxy
+        availableChargeTime = (dDist/evSpeed) - self.fullChargeTolerance
+        requestedWh = self.requests[ev]
+        possibleCharge = Drone.d0Type.WhEVChargeRatePerTimeStep * availableChargeTime
+
+        return  possibleCharge > requestedWh
+
 
     def findEdgePos(self, evID, deltaPos):
         """work out the edge and position of the EV, when it is deltaPos metres along the route from the current position
@@ -441,10 +469,10 @@ class ControlCentre:
 
         else:
             print("\nSummary Statistics:\t\t", timeStamp)
-            print("\tModel flags:\tRendezvous: {!r}\tCharge Once: {!r}\tDrone print: {!r}\n\tEnergy Weight: "
-                  "{:.1f}\tUrgency Weight: {:.1f}\tProximity radius(m): {:.0f}\tTime steps: {:.1f}".format
-                  (GG.modelRendezvous, GG.onlyChargeOnce, GG.dronePrint, self.wEnergy,
-                   self.wUrgency, self.proximityRadius, GG.ss.timeStep))
+            print("\tModel flags:\tRendezvous: {!r}\tCharge Once: {!r}\tDrone print: {!r}\tOne Battery: {!r}\n\tEnergy Wt: "
+                  "{:.1f}\tUrgency Wt: {:.1f}\t\tProximity radius(m): {:.0f}\tSteps: {:.1f}\tTolerance(s): {:.0f}".format
+                  (GG.modelRendezvous, GG.onlyChargeOnce, GG.dronePrint, Drone.d0Type.useOneBattery, self.wEnergy,
+                   self.wUrgency, self.proximityRadius, GG.ss.timeStep, self.fullChargeTolerance))
             print("\n\tDrone Totals:\t(%i drones)\n\t\tDistance Km:\t%.2f\n\t\tFlying KWh:\t%.2f\n\t\tCharging KWh:\t%.2f" %
                   (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh))
             print("\tDrone Charger usage:\n\t\tFlying KWh:\t{:.2f}\n\t\tCharge KWh:\t{:.2f}".format
@@ -465,7 +493,7 @@ class ControlCentre:
                 droneDistance = drone.myFlyingCount * drone.myDt.droneStepMperTimeStep / 1000.
                 droneFlyingKWh = drone.myFlyingCount * drone.myDt.droneFlyingWhperTimeStep / 1000.
                 droneChargeKWh = drone.myEVChargingCount * drone.myDt.WhEVChargeRatePerTimeStep / 1000.
-                print("\tdrone:{}\tKm:{:.2f}\tCharge KW:{:.2f}\tFlyingKW:{:.2f}\tResidual (chargeWh:{:.0f} flyingWh:{:.0f})"
+                print("\tdrone: {}\tKm: {:.2f}\tCharge KW: {:.2f}\tFlyingKW: {:.2f}\tResidual (chargeWh: {:.0f} flyingWh: {:.0f})"
                       .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge))
 
     def requestCharge(self, ev, capacity, requestedWh=2000.):

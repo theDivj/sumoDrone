@@ -1,5 +1,6 @@
 """Drone module"""
 import math
+import copy
 from enum import Enum
 import traci
 from GlobalClasses import GlobalClasses as GG
@@ -94,6 +95,7 @@ class Drone:
         print("minDroneFlyingWh:\t", self.myDt.minDroneFlyingWh)
         print("viableDroneCharge:\t", self.myDt.viableDroneCharge)
         print("viableDroneFlyingWh:\t", self.myDt.viableDroneFlyingWh, "\n")
+        print("useOneBattery:\t", self.myDt.useOneBattery, "\n")
 
 
     def __lt__(self, other):
@@ -116,7 +118,7 @@ class Drone:
         Drone.dummyEVCreated = True
 
     @classmethod
-    def setDroneType(cls, droneType="ehang184"):
+    def setDroneType(cls, useOneBattery, droneType="ehang184"):     # default will be overridden by definition in add file
         """Support different drone definitions - initially to give us a drone that doesn't need charging"""
 
         Drone.d0Type.droneKMperh = GG.getDroneSpeed()  # get speed override if any
@@ -132,6 +134,7 @@ class Drone:
                 Drone.d0Type.droneChargeViablep = 0.3                    # minimum viable level %
                 Drone.d0Type.WhEVChargeRatePerTimeStep = 25000 / 3600.   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
                 Drone.d0Type.WhDroneRechargePerTimeStep = 75000 / 3600.  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+                Drone.d0Type.useOneBattery = useOneBattery               #  if true use the charge battery to fly and charge
 
             case "ehang184x":            # ehang 184 with artificially increased battery sizes so they don't need recharging
                 Drone.d0Type.droneChargeWh = 3000000.     # 100 * actual
@@ -141,6 +144,7 @@ class Drone:
                 Drone.d0Type.droneChargeViablep = 0.3                    # minimum viable level %
                 Drone.d0Type.WhEVChargeRatePerTimeStep = 25000 / 3600.   # 25KW   rate of vehicle charge from drone  (adjust for timeStep when simulation starts)
                 Drone.d0Type.WhDroneRechargePerTimeStep = 75000 / 3600.  # 75KW   rate of drone charge when parked  (adjust for timeStep when simulation starts)
+                Drone.d0Type.useOneBattery = useOneBattery               #  if true use the charge battery to fly and charge
 
         Drone.d0Type.droneMperSec = Drone.d0Type.droneKMperh / 3.6
         Drone.d0Type.droneStepMperTimeStep = Drone.d0Type.droneMperSec                            # How far (metres) the drone will travel in one time step (adjust for timeStep when simulation starts)
@@ -151,7 +155,7 @@ class Drone:
         Drone.d0Type.viableDroneFlyingWh = Drone.d0Type.droneChargeViablep    * Drone.d0Type.droneFlyingWh
 
     @classmethod
-    def setDroneTypeFromPOI(cls, zeroDrone):
+    def setDroneTypeFromPOI(cls, useOneBattery, zeroDrone):
         """ Update the default DroneType - d0Type , containing drone behavior varuables
                from a definition in an additional file - if it exists.
              Then if the --z option is set create drones from definitions in the file"""
@@ -192,6 +196,10 @@ class Drone:
                     dWhDroneRechargeRate = traci.poi.getParameter(poi, "WhDroneRechargeRate")
                     if len(dWhDroneRechargeRate) > 1: Drone.d0Type.WhDroneRechargePerTimeStep = int(dWhDroneRechargeRate)/3600.
 
+                    dUseOneBattery = traci.poi.getParameter(poi, "useOneBattery")
+                    if len(dUseOneBattery) > 1: Drone.d0Type.useOneBattery = True         # if set in the add file override the runstring
+                    else: Drone.d0Type.useOneBattery = useOneBattery                      #  otherwise use the passed runstring value
+
                     traci.poi.remove(poi)
                     if not zeroDrone:
                         return 1  # ie we've set the d0Type so can return
@@ -202,7 +210,8 @@ class Drone:
             for poi in POIlist:
                 if traci.poi.getType(poi) == "drone" :  # weve removed the d0 drone
                     DT = DroneType()
-
+                    DT = copy.deepcopy(Drone.d0Type)
+                    
                     dWidth = int(traci.poi.getWidth(poi))
                     if dWidth > 1: DT.droneWidth = dWidth
                     dHeight = int(traci.poi.getHeight(poi))
@@ -235,6 +244,9 @@ class Drone:
 
                     dWhDroneRechargeRate = traci.poi.getParameter(poi, "WhDroneRechargeRate")
                     if len(dWhDroneRechargeRate) > 1: DT.WhDroneRechargePerTimeStep = int(dWhDroneRechargeRate)/3600.
+
+                    dUseOneBattery = traci.poi.getParameter(poi, "useOneBattery")
+                    if len(dUseOneBattery) > 1: DT.useOneBattery = True
 
                     try:
                         pos = traci.poi.getPosition(poi)
@@ -414,7 +426,8 @@ class Drone:
         """EV tells us that it is charged or has left simulation so free self up"""
         match evState:
             case EV.EVState.LEFTSIMULATION:
-                self.myBrokenEVCharges += 1
+                if self.myState == Drone.DroneState.CHARGINGEV:
+                    self.myBrokenEVCharges += 1
                 self.setMyParkPosition()
                 if self.myState not in (Drone.DroneState.CHARGINGDRONE, Drone.DroneState.PARKED):
                     self.park()
@@ -557,10 +570,15 @@ class Drone:
         breakOff = False
         match mode:
             case "fly":
-                self.myFlyingCharge -= self.myDt.droneFlyingWhperTimeStep
                 self.myFlyingCount += 1
-                if self.myFlyingCharge < self.myDt.minDroneFlyingWh:
-                    breakOff = True
+                if self.myDt.useOneBattery:
+                    self.myCharge -= self.myDt.droneFlyingWhperTimeStep
+                    if self.myCharge < self.myDt.minDroneCharge:
+                        breakOff = True
+                else:
+                    self.myFlyingCharge -= self.myDt.droneFlyingWhperTimeStep
+                    if self.myFlyingCharge < self.myDt.minDroneFlyingWh:
+                        breakOff = True
 
             case "chargeEV":
                 self.myCharge -= self.myDt.WhEVChargeRatePerTimeStep
@@ -577,7 +595,10 @@ class Drone:
             case _:
                 if self.myState == Drone.DroneState.FLYINGTOCHARGE:       # we're flying back to charge, only time we get here for now
                     self.myFlyingCount += 1
-                    self.myFlyingCharge -= self.myDt.droneFlyingWhperTimeStep
+                    if self.myDt.useOneBattery:
+                        self.myCharge -= self.myDt.droneFlyingWhperTimeStep
+                    else:
+                        self.myFlyingCharge -= self.myDt.droneFlyingWhperTimeStep
 
         # problem - one of my batteries below contingency
         if breakOff:

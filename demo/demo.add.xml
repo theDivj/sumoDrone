@@ -21,7 +21,7 @@
         <param key="chargeRequestThresholdWh" value="30000"/> <!-- new (optional) parameter to set threshold when a charge request is triggered -->
     </vType>
 
-    <poi id="d0" type="drone" color="0,0,255" layer="250" lane="A9A8_0" imgFile='drone.png' height="10" width="10" pos="5" >
+    <poi id="d0" type="drone" color="0,0,255" layer="250" lane="A9A8_0" imgFile="drone.png" height="10" width="10" pos="5" >
 		<param key="droneKMperh" value= "60.0"/>            <!-- drone speed - too slow and we'll never catch EV's -->
 		<param key="droneChargeWh" value= "30000.0"/>       <!-- drone battery capacity available to charge - when full -->
 		<param key="droneFlyingWh" value= "14400.0"/>       <!-- drone battery capacity available to fly - when full -->
@@ -30,6 +30,7 @@
 		<param key="droneChargeViablep" value= "0.3"/>      <!-- % of charge above which the drone is deemed available for charging EV-->
 		<param key="WhEVChargeRate" value= "25000"/>        <!-- rate at which drone will charge an EV -->
 		<param key="WhDroneRechargeRate" value= "75000"/>   <!-- rate at which drone will recharge itself -->
+		<param key="useOneBattery" value= ""/>              <!-- whether to use one battery - non-empty means use one battery -->
     </poi>
     <!-- these drones will default to the d0 parameters above - any can be added here to override those -->
     <poi id="d91" type="drone" color="0,250,250"  layer="250" lane="E4E5_0" pos="6" />

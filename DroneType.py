@@ -16,6 +16,7 @@ class DroneType:
         self.droneColour =  0, 0, 255, 255
         self.droneWidth = 10.0
         self.droneHeight = 10.0
+        self.useOneBattery = False
 
         # derived variables
         self.droneMperSec =self.droneKMperh / 3.6

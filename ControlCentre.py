@@ -11,12 +11,13 @@ from Drone import Drone
 class ControlCentre:
     """Main class receiving requests from EV's and notifications from Drones and EV's when charge completes or Drone is out of battery"""
 
-    def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, fullChargeTolerance=0, droneType="ehang184"):
+    def __init__(self, wEnergy, wUrgency, proximityRadius, maxDrones, fullChargeTolerance=0, globalCharge=0.0, droneType="ehang184"):
         self.wEnergy = float(wEnergy)
         self.wUrgency = float(wUrgency)
         self.proximityRadius = proximityRadius
         self.maxDrones = maxDrones
         self.fullChargeTolerance = fullChargeTolerance
+        self.globalCharge = globalCharge
 
         self.requests = {}
         self.allocatedEV = {}
@@ -498,9 +499,12 @@ class ControlCentre:
 
     def requestCharge(self, ev, capacity, requestedWh=2000.):
         """request for charge from EV"""
-        self.requests[ev] = requestedWh
+        if self.globalCharge > 1.0:
+            self.requests[ev] = self.globalCharge
+        else:
+            self.requests[ev] = requestedWh
         if GG.chargePrint:
-            print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), EV.EVState.CHARGEREQUESTED, "", capacity, 0.0, requestedWh), file=GG.chargeLog)
+            print("{}\t{}\t{!r}\t{}\t{:.1f}\t{:.1f}\t{:.1f}".format(GG.ss.timeStep, ev.getID(), EV.EVState.CHARGEREQUESTED, "", capacity, 0.0, self.requests[ev]), file=GG.chargeLog)
 
     def setMaxDrones(self, pmaxDrones):
         """ update maxDrones - when --z option is used drones are limited to those in the add file"""

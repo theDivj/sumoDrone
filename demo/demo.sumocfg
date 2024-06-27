@@ -8,7 +8,7 @@
       </configuration>
 	<output>
         <battery-output value="" type="FILE" help="Save the battery values of each vehicle"/>
-        <chargingstations-output value="csout.xml" type="FILE" help="Write data of charging stations"/>
+        <chargingstations-output value="" type="FILE" help="Write data of charging stations"/>
         <tripinfo-output value="" synonymes="tripinfo" type="FILE" help="Save single vehicle trip info into FILE"/>
         <fcd-output value="" type="" help="Save the Floating Car Data"/>
         <statistic-output value="stats.txt" synonymes="statistics-output" type="FILE" help="Write overall statistics into FILE"/>

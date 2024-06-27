@@ -74,7 +74,7 @@ class drClass:
 
     def parseRunstring(self, parser=None, argparse=None):
         """use argparse to parse runstring and set our variables"""
-        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+        parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + self.getVersion())
 
         # set up the expected runstring
         parser.add_argument('sumocfg', help='sumo configuration file')            # mandatory - sumo configuration
@@ -84,6 +84,7 @@ class drClass:
         parser.add_argument('-d', '--maxDrones', help='maximum drones to spawn, default is 6', metavar='n', type=int, default=6)
         parser.add_argument('-e', '--maxEVs', help='maximum EVs that are allowed to charge by Drone, default is no limit', metavar='n', type=int, default=sys.maxsize)
         parser.add_argument('-f', '--fullChargeTolerance', help='tolerance (s) use > 0 ensure only full charges', metavar='n', type=int, default=0)
+        parser.add_argument('-g', '--globalCharge', help='global override of all charge request values with this', metavar='wH', type=float, default=0.0)
         parser.add_argument('-k', '--droneKmPerHr', help='drone speed Km/h', metavar='n', type=float, default=60.0)
         parser.add_argument('-l', '--lineOfSight', help='route drone to EV by line of sight at each step, default is to compute a rendezvous point\n', action='store_const', default='True')
         parser.add_argument('-m', '--multipleCharge', help='Allow EVs to be charged more than once - default is only once', action='store_const', default='True')
@@ -95,7 +96,7 @@ class drClass:
         parser.add_argument('-u', '--useOneBattery', help='use the charge battery for flying',action='store_const', default='False')
         parser.add_argument('-we', '--wEnergy','--we', help='weighting to apply to vehicles found in radius, default 1', metavar='n.n', type=float, default=1.0)
         parser.add_argument('-wu', '--wUrgency','--wu', help='weighting to apply to nearest vehicle urgency, default 0', metavar='n.n', type=float, default=0.0)
-        parser.add_argument('-z', '--zeroDrone', help='Only use drones defined in the ...add.xml file', action='store_const', default='True')
+        parser.add_argument('-z', '--zeroDrone', '--z', help='Only use drones defined in the ...add.xml file', action='store_const', default='True')
 
         # and parse what we actually got
         args = parser.parse_args()
@@ -145,7 +146,7 @@ class drClass:
         # create our management objects plus ChargeHubs - which is essentially static
         ss = Simulation(drClass.sumoCmd, maxEVs)
         ch = ChargeHubs()
-        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones, args.fullChargeTolerance)
+        cc = ControlCentre(args.wEnergy, args.wUrgency, args.proximityRadius, args.maxDrones, args.fullChargeTolerance, args.globalCharge)
 
         # setup the global references to these objects
         gg = GG(cc, ss, ch)

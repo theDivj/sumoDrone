@@ -1,6 +1,6 @@
-Simple example to model the use of Drones to charge Electric vehicles (EVs).
+Modelling the use of Drones to charge Electric vehicles (EVs).
 
-  Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model
+  Basically vehicles drive until they need a charge - currently triggered by thresholds in the EV model. (Can be configured in additional files)
   they then get charged by the nearest drone, that is not busy, after which the drone will return to the nearest charge hub - or another vehicle if required
   
 Charging stations(need to be created on the road network and are 'discovered' in the code. These are used to launch and 'charge' drones
@@ -10,24 +10,29 @@ This code uses the nearest free drone, or if none free, then one will be spawned
 When charging is complete/the drone is out of charge then the drone goes to the nearest chargeing station to recharge.
 
 The parameters used for the Drone in this model correspond to those of an Ehang 184 which has top speed of 60km/h, and a 14.4 KW battery giving 23 mins flight time.
-The order of allocation of drones to vehicles is dependant on the 'urgency' the ratio between the distance to the nearest charge point and the remaining charge
-
+Specific parameters for the default drone and other drones can be set in additional files.
+The order of allocation of drones to vehicles is dependant on the 'urgency' (wu parameter) the ratio between the distance to the nearest charge point and the remaining charge
+  and proximity (we parameter) the vehicle that is closest to the most other vehicles also needing a charge. 
+  
 In the GUI, vehicles and drones turn red when they need charging and green when they are actually charging.
 
+There are python and c++ variants of the code. The python version can use either sumo or sumo-gui, the c++ variant can only use sumo because sumolib doesn't currently support sumo-gio
 
 Execution:
    open a cmd/shell window in the directory where these files have been placed
      python drclass.py -h      summarises the runstring parameters and defaults
+     sumodrone -h
      
-   demonstrationn files : (running from the directory where these files were unpacked.)
+   demonstration files : (running from the directory where these files were unpacked.)
       python  drclass.py  demo/demo.sumocfg                   Note that the first drone is launched around 1200s
-     
+      sumodrone demo/demo.sumocfg
       
 Files:
-    drclass.py          Startup file - parameter processing
+    drClass.py          Startup file - parameter processing
     ControlCentre.py    Control Centre class - handling requests for charge and allocation of drones
     Simulation.py       Simulation class - mapping the insertion and departure of vehicles in the SUMO model
     Drone.py            Drone class - implementing the Drone state model, using a SUMO POI to represent a drone
+    DroneType.py        Drone Type class - implementing variable drone types that can be set in additional files
     EV.py               EV class - implementing the EV state model, EVs in this class 'shadow' EVs in the SUMO model
     ChargeHubs.py       ChargeHubs class - static class maintaining charging station locations with location helper functions
     GlobalClasses.py    GlobalClasses - supporting communication between Control Centre, Drones and EVs
@@ -63,15 +68,14 @@ EV State model:
                    by the Control Centre allocating a drone and by the drone breaking off to charge itself
         
 
-
 At the end of the Simulation,  summary statistics are provided - as below, these are condensed into a single line if the -b (brief) option is used.
 
 
 Summary Statistics:              2024-02-25T19:49:14.300185
-        Model flags:    Rendezvous: True        Charge Once: False      Drone print: False
-        Energy Weight: 1.0      Urgency Weight: 0.0     Proximity radius(m): 1000       Time steps: 15148.0
+        Model flags:    Rendezvous: True        Charge Once: False      Drone print: False     One Battery: True
+        Energy Wt: 1.0      Urgency Wt: 0.0     Proximity radius(m): 1000   Steps: 15148.0   Tolerance(s): 300
 
-        Drone Totals:   (3 drones)
+        Drone Totals:   (3)
                 Distance Km:    7.03                    The total distance flown by all drones.
                 Flying KWh:     4.40                    The total KWh used to fly the drone
                 Charging KWh:   57.06                   The total KWh used by the drone to charge EVs
@@ -82,7 +86,7 @@ Summary Statistics:              2024-02-25T19:49:14.300185
                 Flying KWh:     43.2                    The charge level of the flying battery at the end of the simulation
                 Charging KWh:   87.1                    The charge level of the EV charging battery at the end of the simulation
 
-        EV Totals:      (6 EVs)
+        EV Totals:      (6)
                 Charge KWh:     57.1                    The total charge provided to all EV's
                 Charge Gap KWh: 0.5                     The sum of the difference between charge level and 'charge done' level for all EVs at simulation end
                 Charge Sessions:
@@ -93,7 +97,7 @@ Summary Statistics:              2024-02-25T19:49:14.300185
         Successful chases: 26   Average chase time: 3.4s        broken Chases: 0              Chases represent the time between rendezvous and actually reaching the EV
                                                                                                    ( reflects the performance of the rendezvous computation.)
 Discrete Drone data:
-        drone:d1        Km:2.73 Charge KW:19.83 FlyingKW:1.71   Residual ( chargeWh:30021 flyingWh:14418 )
+        drone:d1        Km:2.73 Charge KW:19.83 FlyingKW:1.71   Residual ( chargeWh:30021 flyingWh:14418 )    Residual is the values left on drone at end of simulation
         drone:d2        Km:1.85 Charge KW:17.43 FlyingKW:1.16   Residual ( chargeWh:30007 flyingWh:14408 )
         drone:d3        Km:2.45 Charge KW:19.80 FlyingKW:1.53   Residual ( chargeWh:27056 flyingWh:14408 )
 

@@ -160,7 +160,7 @@ class drClass:
 
         # any output file would have been opened in parse_args() - write out the title line if needed
         if gg.dronePrint:
-            print("Time Step\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=droneLog)
+            print("timeStep\tDrone\tEV\tLane\tPosition\tdrone x\tdrone y\tdroneWh\tchargeWh\tflyingWh\tactivity", file=droneLog)
         if gg.chargePrint:
             print("timeStep\tEV id\tEV State\tDrone\tCapacity\tCharge Wh(if any)\tRequested Charge Wh", file=chargeLog)
 

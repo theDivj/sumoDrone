@@ -9,7 +9,7 @@ The SUMO default for these is that the charging power is 0 - so they won't charg
 This code uses the nearest free drone, or if none free, then one will be spawned (upto a limit) from the nearest charging station.
 When charging is complete/the drone is out of charge then the drone goes to the nearest chargeing station to recharge.
 
-The parameters used for the Drone in this model correspond to those of an Ehang 184 which has top speed of 60km/h, and a 14.4 KW battery giving 23 mins flight time.
+The default parameters used for the Drone in this model correspond to those of an Ehang 184 which has top speed of 60km/h, and a 14.4 KW battery giving 23 mins flight time.
 Specific parameters for the default drone and other drones can be set in additional files.
 The order of allocation of drones to vehicles is dependant on the 'urgency' (wu parameter) the ratio between the distance to the nearest charge point and the remaining charge
   and proximity (we parameter) the vehicle that is closest to the most other vehicles also needing a charge. 
@@ -93,6 +93,7 @@ Summary Statistics:              2024-02-25T19:49:14.300185
                         Full charges:   25              The number of successful charge sessions
                         Part (drone):   0               The number of sessions broken off because the Drone battery got too low
                         Part (ev):      1               The number of sessions broken off because the EV left the simulation while charging
+                misMatch: 1.7                           Metric illustrating how well Drones have managed to charge urgent EVs  (0 means drones always chose most urgent)
 
         Successful chases: 26   Average chase time: 3.4s        broken Chases: 0              Chases represent the time between rendezvous and actually reaching the EV
                                                                                                    ( reflects the performance of the rendezvous computation.)

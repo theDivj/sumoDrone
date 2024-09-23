@@ -50,7 +50,9 @@ class Drone:
         self.myEV = None
 
         # logging variables
+        self.myCreationTime = GG.ss.timeStep           # time at which drone is launched
         self.myFlyingCount = 0            # used to compute distance travelled
+        self.myOverheadCount = 0          # time not available to charge (ie when flying to charge or actually charging)
         self.myFullCharges = 0             # count of complete charges
         self.myBrokenCharges = 0           # count of charges broken off - by me out of charge
         self.myBrokenEVCharges = 0         # count of charges broken off - by EV (leaving)
@@ -211,7 +213,7 @@ class Drone:
                 if traci.poi.getType(poi) == "drone" :  # weve removed the d0 drone
                     DT = DroneType()
                     DT = copy.deepcopy(Drone.d0Type)
-                    
+
                     dWidth = int(traci.poi.getWidth(poi))
                     if dWidth > 1: DT.droneWidth = dWidth
                     dHeight = int(traci.poi.getHeight(poi))
@@ -530,11 +532,13 @@ class Drone:
 
             case Drone.DroneState.CHARGINGDRONE:
                 self.chargeMe()
+                self.myOverheadCount += 1
                 if GG.dronePrint:
                     self.logLine("charging self")
 
             case Drone.DroneState.FLYINGTOCHARGE:
                 self.usePower("")
+                self.myOverheadCount += 1
                 if self.fly(self.myParkPosition):
                     traci.poi.setParameter(self.myID, "status", "parked - needs charge")
                     traci.poi.setColor(self.myID, (0, 255, 0, 255))

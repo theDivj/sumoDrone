@@ -29,7 +29,7 @@ class ControlCentre:
 
         self.spawnedDrones = 0
         self.insertedDummies = 0
-        
+
         self.misMatch = 0
         self.allocatedCount = 0
 
@@ -201,7 +201,7 @@ class ControlCentre:
             evCount = len(urgencyList)
             proximityWt = self.wEnergy / proximityMax
             urgencyWt = self.wUrgency / urgencyMax
-            
+
             pos = 0
             for ev in dict(sorted(urgencyList.items(), key=lambda item: item[1])):
                 urgencyPosition[ev] = pos
@@ -407,7 +407,9 @@ class ControlCentre:
     def printDroneStatistics(self, brief, version, runstring):
         """Print out Drone and EV statistics for the complete run"""
         # compute drone statistic totals
+        tmyLifetime = 0              # Time drones are available
         tmyFlyingCount = 0           # used to compute distance travelled
+        tmyOverheadCount = 0         # count of overhead steps (ie charging or flying to charge)
         tmyFullCharges = 0           # count of complete charges
         tmyBrokenCharges = 0         # count of charges broken off - either by me out of charge
         tmyBrokenEVCharges = 0       # count of charges broken off - by EV leaving
@@ -426,8 +428,11 @@ class ControlCentre:
         tmyChargeMeKWh = 0.0
         cMisMatch = float(self.misMatch) / self.allocatedCount
 
+        totalSteps = GG.ss.timeStep
         for drone in self.freeDrones | self.needChargeDrones | set(self.allocatedDrone):
+            tmyLifetime             += totalSteps - drone.myCreationTime
             tmyFlyingCount          += drone.myFlyingCount
+            tmyOverheadCount        += drone.myOverheadCount
             tmyFlyingKWh            += drone.myFlyingCount * drone.myDt.droneFlyingWhperTimeStep
 
             tDroneDistance          += drone.myFlyingCount * drone.myDt.droneStepMperTimeStep
@@ -448,6 +453,8 @@ class ControlCentre:
                 tmyChaseCount += drone.myChaseCount
                 tmyBrokenChaseCount += drone.myBrokenChaseCount
                 tmyChaseSteps += drone.myChaseSteps
+
+        pOverhead = 100.0 * tmyOverheadCount / tmyLifetime
 
         # alternative computation - avoiding errors from addition of large no of floating point
         # tmyFlyingKWh = tmyFlyingCount * Drone.droneFlyingWhperTimeStep / 1000.
@@ -474,7 +481,7 @@ class ControlCentre:
             sumoVersion = traci.getVersion()
             print("Date\tRv\tOnce\tOutput\twE\twU\tradius\tSteps\t# Drones"
                   "\tDistance\tFlyKWh\tchKWh\tFlyChgKWh\tChgKWh\trFlyKWh\trChKWh"
-                  "\t# EVs\tEVChg\tEVgap\tFull\tbrDrone\tbrEV\tChases\tAvg Chase\tBrk Chase\tmisMatch")
+                  "\t# EVs\tEVChg\tEVgap\tFull\tbrDrone\tbrEV\tChases\tAvg Chase\tBrk Chase\tmisMatch\t%Overhead")
             print("{}\t{!r}\t{!r}\t{!r}\t{:.1f}\t{:.1f}\t{:.0f}\t{:.1f}".format
                   (timeStamp, GG.modelRendezvous, GG.onlyChargeOnce,
                    GG.dronePrint, self.wEnergy, self.wUrgency, self.proximityRadius, GG.ss.timeStep), end='')
@@ -483,12 +490,12 @@ class ControlCentre:
                   (tmyChargeMeFlyingKWh, tmyChargeMeKWh, tmyResidualFlyingKWh, tmyResidualChargeKWh), end="")
             print("\t%i\t%.2f\t%.2f" %
                   (EV.evCount, EV.evChargeSteps * Drone.d0Type.WhEVChargeRatePerTimeStep/1000., EV.evChargeGap/(1000. * EV.evCount)), end="")
-            print("\t{:.0f}\t{:.0f}\t{:.0f}".format(tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges, cMisMatch), end="")
+            print("\t{:.0f}\t{:.0f}\t{:.0f}".format(tmyFullCharges, tmyBrokenCharges, tmyBrokenEVCharges), end="")
 
             if GG.modelRendezvous:
-                print("\t{}\t{:.2f}\t{}\t{:.2f}\t{}\t{}\t{}".format(tmyChaseCount, averageChase, tmyBrokenChaseCount, cMisMatch, runstring, version, sumoVersion))
+                print("\t{}\t{:.2f}\t{}\t{:.2f}\t{:.2f}\t{}\t{}\t{}".format(tmyChaseCount, averageChase, tmyBrokenChaseCount, cMisMatch, pOverhead, runstring, version, sumoVersion))
             else:
-                print("\t\t\t\t{:.2f}\t{}\t{}\t{}".format(cMisMatch,runstring, version, sumoVersion))
+                print("\t\t\t\t{:.2f}\t{:.2f}\t{}\t{}\t{}".format(cMisMatch,pOverhead, runstring, version, sumoVersion))
 
         else:
             print("\nSummary Statistics:\t\t", timeStamp)
@@ -496,8 +503,8 @@ class ControlCentre:
                   "{:.1f}\tUrgency Wt: {:.1f}\t\tProximity radius(m): {:.0f}\tSteps: {:.1f}\tTolerance(s): {:.0f}".format
                   (GG.modelRendezvous, GG.onlyChargeOnce, GG.dronePrint, Drone.d0Type.useOneBattery, self.wEnergy,
                    self.wUrgency, self.proximityRadius, GG.ss.timeStep, self.fullChargeTolerance))
-            print("\n\tDrone Totals:\t(%i drones)\n\t\tDistance Km:\t%.2f\n\t\tFlying KWh:\t%.2f\n\t\tCharging KWh:\t%.2f" %
-                  (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh))
+            print("\n\tDrone Totals:\t(%i drones)\n\t\tDistance Km:\t%.2f\n\t\tFlying KWh:\t%.2f\n\t\tCharging KWh:\t%.2f\n\t\tOverhead: \t%.2f%%" %
+                  (self.spawnedDrones, tDroneDistance, tmyFlyingKWh, tmyChargingKWh, pOverhead))
             print("\tDrone Charger usage:\n\t\tFlying KWh:\t{:.2f}\n\t\tCharge KWh:\t{:.2f}".format
                   (tmyChargeMeFlyingKWh, tmyChargeMeKWh))
             print("\tResiduals:\n\t\tFlying KWh:\t{:.1f}\n\t\tCharging KWh:\t{:.1f}".format
@@ -516,8 +523,9 @@ class ControlCentre:
                 droneDistance = drone.myFlyingCount * drone.myDt.droneStepMperTimeStep / 1000.
                 droneFlyingKWh = drone.myFlyingCount * drone.myDt.droneFlyingWhperTimeStep / 1000.
                 droneChargeKWh = drone.myEVChargingCount * drone.myDt.WhEVChargeRatePerTimeStep / 1000.
-                print("\tdrone: {}\tKm: {:.2f}\tCharge KW: {:.2f}\tFlyingKW: {:.2f}\tResidual (chargeWh: {:.0f} flyingWh: {:.0f})"
-                      .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge))
+                pOverhead = 100.0 * drone.myOverheadCount / (totalSteps - drone.myCreationTime)
+                print("\tdrone: {}\tKm: {:.2f}\tCharge KW: {:.2f}\tFlyingKW: {:.2f}\tResidual (chargeWh: {:.0f} flyingWh: {:.0f})\tOverhead: {:.2f}%"
+                      .format(drone.myID, droneDistance, droneChargeKWh, droneFlyingKWh, drone.myCharge, drone.myFlyingCharge, pOverhead))
 
     def requestCharge(self, ev, capacity, requestedWh=2000.):
         """request for charge from EV"""
